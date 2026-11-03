@@ -31,5 +31,3 @@ flutter:
       fonts:
         - asset: assets/fonts/Horizon.otf
           style: normal
-        - asset: assets/fonts/Horizon-Italic.otf
-          style: italic
