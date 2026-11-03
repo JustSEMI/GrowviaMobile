@@ -56,7 +56,7 @@ abstract final class GrowviaTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: scheme,
-      fontFamily: 'InstrumentSans',
+      fontFamily: 'Montserrat',
       extensions: <ThemeExtension<dynamic>>[t],
     );
 
@@ -74,12 +74,12 @@ abstract final class GrowviaTheme {
       ),
       textTheme: base.textTheme.copyWith(
         displaySmall: base.textTheme.displaySmall?.copyWith(
-          fontFamily: 'InstrumentSerif',
+          fontFamily: 'Horizon',
           height: 1.12,
           fontSize: 42,
         ),
         headlineMedium: base.textTheme.headlineMedium?.copyWith(
-          fontFamily: 'InstrumentSerif',
+          fontFamily: 'Horizon',
           height: 1.12,
           fontSize: 34,
         ),
@@ -141,7 +141,7 @@ abstract final class GrowviaTheme {
           disabledBackgroundColor: t.disabled,
           disabledForegroundColor: t.secondary,
           textStyle: const TextStyle(
-            fontFamily: 'InstrumentSans',
+            fontFamily: 'Montserrat',
             fontSize: 15,
             fontWeight: FontWeight.w600,
           ),
@@ -176,7 +176,7 @@ abstract final class GrowviaTheme {
         height: 78,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStatePropertyAll(
-          TextStyle(fontFamily: 'InstrumentSans', fontSize: 12, color: t.ink),
+          TextStyle(fontFamily: 'Montserrat', fontSize: 12, color: t.ink),
         ),
       ),
       dividerTheme: DividerThemeData(color: t.line, space: 1),
@@ -234,7 +234,7 @@ abstract final class GrowviaTheme {
         backgroundColor: t.neutral,
         selectedColor: t.paleGreen,
         side: BorderSide(color: t.line),
-        labelStyle: TextStyle(color: t.ink, fontFamily: 'InstrumentSans'),
+        labelStyle: TextStyle(color: t.ink, fontFamily: 'Montserrat'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       ),
       snackBarTheme: SnackBarThemeData(
@@ -242,7 +242,7 @@ abstract final class GrowviaTheme {
         backgroundColor: t.ink,
         contentTextStyle: TextStyle(
           color: t.canvas,
-          fontFamily: 'InstrumentSans',
+          fontFamily: 'Montserrat',
         ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -269,7 +269,7 @@ abstract final class GrowviaTheme {
         textStyle: TextStyle(
           color: t.canvas,
           fontSize: 12,
-          fontFamily: 'InstrumentSans',
+          fontFamily: 'Montserrat',
         ),
       ),
       textSelectionTheme: TextSelectionThemeData(

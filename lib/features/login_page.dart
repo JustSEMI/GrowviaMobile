@@ -11,6 +11,34 @@ import '../ui/growvia_icon.dart';
 import 'recovery_page.dart';
 import 'settings_page.dart';
 
+/// Ukuran ikon di dalam field login, mengikuti token `.icon` web (20px).
+const double _fieldIconSize = 20;
+
+/// Target sentuh minimum 48x48 untuk ikon awal dan tombol akhir field.
+const BoxConstraints _fieldIconConstraints = BoxConstraints(
+  minWidth: 48,
+  minHeight: 48,
+);
+
+/// Ikon awal field: target sentuh 48x48, glyph tetap 20px.
+///
+/// `InputDecorator` membungkus `prefixIcon` dengan constraint minimum 48px.
+/// Tanpa [Center], [GrowviaIcon] ikut melar ke 48px dan painter-nya
+/// menskalakan viewBox 24 menjadi 48 — ikon tampil dua kali lebih besar
+/// daripada ikon tombol mata di field yang sama.
+class _FieldPrefixIcon extends StatelessWidget {
+  const _FieldPrefixIcon(this.icon);
+
+  final GrowviaIcon icon;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: _fieldIconConstraints.minWidth,
+    height: _fieldIconConstraints.minHeight,
+    child: Center(child: icon),
+  );
+}
+
 class LoginPage extends StatefulWidget {
   const LoginPage({required this.controller, super.key});
   final AppController controller;
@@ -184,7 +212,7 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
                 style: TextStyle(
-                  fontFamily: 'InstrumentSerif',
+                  fontFamily: 'Horizon',
                   fontSize: 54,
                   height: 1.02,
                   letterSpacing: -1.7,
@@ -289,7 +317,10 @@ class _LoginPageState extends State<LoginPage> {
               controller: _email,
               decoration: const InputDecoration(
                 labelText: 'Email',
-                prefixIcon: GrowviaIcon('mail'),
+                prefixIcon: _FieldPrefixIcon(
+                  GrowviaIcon('mail', size: _fieldIconSize),
+                ),
+                prefixIconConstraints: _fieldIconConstraints,
               ),
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
@@ -308,7 +339,11 @@ class _LoginPageState extends State<LoginPage> {
               controller: _password,
               decoration: InputDecoration(
                 labelText: 'Kata sandi',
-                prefixIcon: const GrowviaIcon('lock'),
+                prefixIcon: const _FieldPrefixIcon(
+                  GrowviaIcon('lock', size: _fieldIconSize),
+                ),
+                prefixIconConstraints: _fieldIconConstraints,
+                suffixIconConstraints: _fieldIconConstraints,
                 suffixIcon: IconButton(
                   tooltip: _visible
                       ? 'Sembunyikan kata sandi'

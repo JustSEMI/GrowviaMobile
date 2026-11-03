@@ -24,9 +24,12 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   fonts:
-    - family: InstrumentSans
+    - family: Montserrat
       fonts:
-        - asset: assets/fonts/InstrumentSans.ttf
-    - family: InstrumentSerif
+        - asset: assets/fonts/Montserrat.ttf
+    - family: Horizon
       fonts:
-        - asset: assets/fonts/InstrumentSerif.ttf
+        - asset: assets/fonts/Horizon.otf
+          style: normal
+        - asset: assets/fonts/Horizon-Italic.otf
+          style: italic
