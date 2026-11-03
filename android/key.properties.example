@@ -1,0 +1,13 @@
+# Template for Android release signing.
+# Copy to android/key.properties and fill in real values. That file is git-ignored.
+#
+#   keytool -genkeypair -v \
+#     -keystore growvia-release.jks -keyalg RSA -keysize 2048 -validity 10000 \
+#     -alias growvia
+#
+# storeFile may be absolute or relative to the android/ directory.
+
+storePassword=
+keyPassword=
+keyAlias=growvia
+storeFile=growvia-release.jks

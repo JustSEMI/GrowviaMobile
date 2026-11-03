@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Leaf mark from Growvia/public/favicon.svg, converted from relative to
+  absolute commands by Tools/growvia-mobile/adaptive_icon_path.py.
+
+  The path is kept in its original 32-unit source space and the transform is
+  applied by the group, so the geometry stays traceable to the SVG. Scale is
+  72/32 = 2.25 with an 18dp offset, which places the artwork inside the 72dp
+  adaptive-icon safe zone.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:scaleX="2.25"
+        android:scaleY="2.25"
+        android:translateX="18"
+        android:translateY="18">
+        <path
+            android:fillColor="#EDF3EC"
+            android:pathData="M25 6C17 5 12 7 10 11C8 14 9 17 11 19L19 11L21 13L13 21C16 23 19 23 22 21C26 18 27 13 25 6ZM7 27L14 20L12 18L5 25L7 27Z" />
+    </group>
+</vector>
