@@ -49,6 +49,7 @@ class MetricCard extends StatelessWidget {
     required this.label,
     required this.icon,
     this.unit = '',
+    this.valueText,
     this.tone = 'green',
     this.reading,
     this.note = 'Menunggu sensor',
@@ -66,6 +67,10 @@ class MetricCard extends StatelessWidget {
 
   final Reading? reading;
   final String note;
+
+  /// Teks nilai manual untuk metrik status (pompa/kipas). Kalau diisi,
+  /// angka mentah tidak ditampilkan.
+  final String? valueText;
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +120,7 @@ class MetricCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '${valid ? reading!.value.toStringAsFixed(1) : '—'}${unit.isEmpty ? '' : ' $unit'}',
+            '${valid ? (valueText ?? reading!.value.toStringAsFixed(1)) : '—'}${unit.isEmpty ? '' : ' $unit'}',
             style: Theme.of(context).textTheme.headlineMedium
                 ?.copyWith(color: valid ? tokens.ink : colors.foreground),
           ),

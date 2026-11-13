@@ -113,7 +113,11 @@ class _HistoryPageState extends State<HistoryPage> {
                 options: const {
                   'temperature': 'Suhu udara',
                   'humidity': 'Kelembapan udara',
+                  'temperature2': 'Suhu udara 2',
+                  'humidity2': 'Kelembapan udara 2',
                   'soil_moisture': 'Kelembapan tanah',
+                  'soil_moisture2': 'Kelembapan tanah 2',
+                  'soil_moisture3': 'Kelembapan tanah 3',
                   'water_level': 'Isi tandon',
                 },
                 onChanged: (value) => setState(() => _metric = value),

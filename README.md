@@ -141,4 +141,3 @@ Pasang APK ke HP:
 
 - ID aplikasi sudah final dan seragam di kedua platform: **`com.growvia.mobile`** — jangan diubah setelah rilis store.
 - Sebelum mengklaim build siap diuji: jalankan `flutter test` dan `flutter analyze` terlebih dahulu.
-- iOS memerlukan macOS serta peninjauan entitlement secure storage.

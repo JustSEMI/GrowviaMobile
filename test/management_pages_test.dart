@@ -13,6 +13,7 @@ import 'package:growvia_mobile/features/users_page.dart';
 import 'package:growvia_mobile/features/activity_page.dart';
 import 'package:growvia_mobile/features/account_page.dart';
 import 'package:growvia_mobile/features/sessions_page.dart';
+import 'package:growvia_mobile/features/backup_page.dart';
 import 'package:growvia_mobile/features/system_settings_page.dart';
 import 'package:growvia_mobile/features/recovery_page.dart';
 
@@ -1017,4 +1018,120 @@ void main() {
       h.app.dispose();
     },
   );
+
+  const backupPayload = {
+    'backups': [
+      {
+        'name': 'growvia-20261112-063000.sql',
+        'size': 24576,
+        'created_at': '2026-11-12T06:30:00+00:00',
+      },
+    ],
+    'state': {
+      'last_run': '2026-11-12T06:30:00+00:00',
+      'last_status': 'ok',
+      'last_error': null,
+      'last_file': 'growvia-20261112-063000.sql',
+    },
+    'schedule': {'backup_schedule': 'daily@02:30', 'backup_keep_days': '7'},
+    'formats': ['sql', 'sql.gz', 'tgz'],
+  };
+
+  testWidgets('protected backup page refuses unauthenticated access', (
+    tester,
+  ) async {
+    final h = Harness();
+    await h.start(login: false);
+    await mount(tester, BackupPage(controller: h.app));
+    expect(find.text('Masuk diperlukan'), findsOneWidget);
+    expect(h.requests, isEmpty);
+    await tester.pumpWidget(const SizedBox());
+    h.app.dispose();
+  });
+
+  testWidgets('backup page renders schedule, status, and stored files', (
+    tester,
+  ) async {
+    final h = Harness(
+      handler: (request) => request.url.path.endsWith('/backups')
+          ? jsonResponse(backupPayload)
+          : null,
+    );
+    await h.start();
+    await mount(tester, BackupPage(controller: h.app));
+    expect(find.text('Mode jadwal: Harian'), findsOneWidget);
+    await reveal(tester, find.text('growvia-20261112-063000.sql'));
+    expect(find.text('growvia-20261112-063000.sql'), findsOneWidget);
+    expect(find.textContaining('24.0 KB'), findsOneWidget);
+    expect(find.text('Unduh .sql'), findsOneWidget);
+    expect(find.text('Hapus'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    h.app.dispose();
+  });
+
+  testWidgets('backup schedule validation blocks invalid interval offline', (
+    tester,
+  ) async {
+    var writes = 0;
+    final h = Harness(
+      handler: (request) {
+        if (request.url.path.endsWith('/backups')) {
+          return jsonResponse(backupPayload);
+        }
+        if (request.url.path.endsWith('/settings') &&
+            request.method == 'PATCH') {
+          writes++;
+          return jsonResponse({
+            'message': 'ok',
+            'settings': <String, String>{},
+          });
+        }
+        return null;
+      },
+    );
+    await h.start();
+    await mount(tester, BackupPage(controller: h.app));
+    await choose(tester, 'backup-mode', 'every');
+    await enter(tester, 'backup-interval', '30');
+    await tap(tester, 'backup-schedule-save');
+    expect(find.text('Interval harus 60-999999 detik.'), findsOneWidget);
+    expect(writes, 0);
+    await tester.pumpWidget(const SizedBox());
+    h.app.dispose();
+  });
+
+  testWidgets('deleting a backup asks for confirmation then refreshes', (
+    tester,
+  ) async {
+    var deleted = 0;
+    final h = Harness(
+      handler: (request) {
+        if (request.method == 'DELETE' &&
+            request.url.path.contains('/backups/growvia-')) {
+          deleted++;
+          expect(
+            request.url.path,
+            '/api/v1/backups/growvia-20261112-063000.sql',
+          );
+          return jsonResponse({'message': 'Backup dihapus.'});
+        }
+        if (request.url.path.endsWith('/backups')) {
+          return jsonResponse(
+            deleted > 0 ? {...backupPayload, 'backups': []} : backupPayload,
+          );
+        }
+        return null;
+      },
+    );
+    await h.start();
+    await mount(tester, BackupPage(controller: h.app));
+    await tap(tester, 'backup-delete-growvia-20261112-063000.sql');
+    expect(find.text('Hapus berkas backup'), findsOneWidget);
+    await tap(tester, 'management-confirm');
+    expect(find.text('Berkas backup dihapus.'), findsOneWidget);
+    expect(deleted, 1);
+    expect(find.byKey(const Key('backup-delete-growvia-20261112-063000.sql')), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    h.app.dispose();
+  });
 }

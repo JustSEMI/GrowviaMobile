@@ -43,13 +43,19 @@ class Reading {
 
   String get label => switch (metric) {
     'temperature' => 'Suhu udara',
+    'temperature2' => 'Suhu udara 2',
     'humidity' => 'Kelembapan udara',
+    'humidity2' => 'Kelembapan udara 2',
     'light' => 'Intensitas cahaya',
     'co2' => 'Kadar CO2',
     'soil_moisture' => 'Kelembapan tanah',
+    'soil_moisture2' => 'Kelembapan tanah 2',
+    'soil_moisture3' => 'Kelembapan tanah 3',
     'soil_temperature' => 'Suhu tanah',
     'water_level' => 'Isi tandon',
     'pump' => 'Status pompa',
+    'fan1' => 'Kipas 1',
+    'fan2' => 'Kipas 2',
     _ => metric,
   };
 }

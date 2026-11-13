@@ -7,7 +7,7 @@ import 'svg_path.dart';
 ///
 /// Web memakai `resources/views/components/icon.blade.php` (SVG `fill`,
 /// viewBox 24x24). Widget ini merender jalur yang sama lewat [CustomPaint],
-/// sehingga bentuk ikon di mobile identik dengan web — bukan ikon Material.
+/// sehingga bentuk ikon di mobile identik dengan web, bukan ikon Material.
 class GrowviaIcon extends StatelessWidget {
   const GrowviaIcon(
     this.name, {

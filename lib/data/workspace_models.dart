@@ -219,3 +219,105 @@ class WorkspaceData {
     );
   }
 }
+
+class BackupFile {
+  const BackupFile({
+    required this.name,
+    required this.size,
+    required this.createdAt,
+  });
+  final String name;
+  final int size;
+  final String createdAt;
+  factory BackupFile.fromJson(Map<String, dynamic> json) {
+    final size = jsonValue<num>(json, 'size');
+    if (size < 0 || size.round() != size) throw const FormatException();
+    final name = jsonValue<String>(json, 'name');
+    if (!RegExp(r'^growvia-\d{8}-\d{6}\.sql$').hasMatch(name)) {
+      throw const FormatException();
+    }
+    return BackupFile(
+      name: name,
+      size: size.toInt(),
+      createdAt: jsonValue<String>(json, 'created_at'),
+    );
+  }
+}
+
+class BackupState {
+  const BackupState({
+    required this.lastRun,
+    required this.lastStatus,
+    required this.lastError,
+    required this.lastFile,
+  });
+  final String? lastRun, lastStatus, lastError, lastFile;
+  static String? _optional(Map<String, dynamic> json, String key) {
+    final value = json[key];
+    if (value == null) return null;
+    if (value is! String || value.isEmpty) throw const FormatException();
+    return value;
+  }
+
+  factory BackupState.fromJson(Map<String, dynamic> json) {
+    final status = _optional(json, 'last_status');
+    if (status != null && !['ok', 'failed', 'running'].contains(status)) {
+      throw const FormatException();
+    }
+    return BackupState(
+      lastRun: _optional(json, 'last_run'),
+      lastStatus: status,
+      lastError: _optional(json, 'last_error'),
+      lastFile: _optional(json, 'last_file'),
+    );
+  }
+}
+
+class BackupData {
+  const BackupData({
+    required this.files,
+    required this.state,
+    required this.schedule,
+    required this.keepDays,
+    required this.formats,
+  });
+  final List<BackupFile> files;
+  final BackupState state;
+  final String schedule;
+  final String keepDays;
+  final List<String> formats;
+  factory BackupData.fromJson(Map<String, dynamic> json) {
+    final scheduleJson = jsonObject(json['schedule']);
+    final schedule = jsonValue<String>(scheduleJson, 'backup_schedule');
+    if (schedule.isNotEmpty &&
+        !RegExp(r'^(daily@[0-2]\d:[0-5]\d|every:[1-9]\d{2,5})$').hasMatch(
+          schedule,
+        )) {
+      throw const FormatException();
+    }
+    final keepDays = jsonValue<String>(
+      jsonObject(json['schedule']),
+      'backup_keep_days',
+    );
+    if (int.tryParse(keepDays) == null) throw const FormatException();
+    final formats = List<String>.unmodifiable(
+      jsonValue<List>(json, 'formats').map<String>((value) {
+        if (value is! String || !['sql', 'sql.gz', 'tgz'].contains(value)) {
+          throw const FormatException();
+        }
+        return value;
+      }),
+    );
+    return BackupData(
+      files: List.unmodifiable(
+        jsonValue<List>(json, 'backups').map(
+          (value) => BackupFile.fromJson(jsonObject(value)),
+        ),
+      ),
+      state: BackupState.fromJson(jsonObject(json['state'])),
+      schedule: schedule,
+      keepDays: keepDays,
+      formats: formats,
+    );
+  }
+}

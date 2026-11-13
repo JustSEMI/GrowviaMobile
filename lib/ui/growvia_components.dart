@@ -383,7 +383,7 @@ class GrowviaConnectionNotice extends StatelessWidget {
 /// Padanan `components/empty-chart.blade.php`.
 ///
 /// Menampilkan kisi grafik bergaris putus-putus dengan keadaan kosong di
-/// tengahnya — bentuk yang sama dengan web, bukan sekadar teks.
+/// tengahnya, bentuk yang sama dengan web, bukan sekadar teks.
 class GrowviaEmptyChart extends StatelessWidget {
   const GrowviaEmptyChart({
     this.title = 'Tren suhu udara',

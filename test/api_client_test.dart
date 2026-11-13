@@ -110,6 +110,32 @@ void main() {
     expect(records.single.recordedAt.isUtc, isTrue);
   });
 
+  test('readings forwards metric, range, and limit as query parameters', () async {
+    final api = GrowviaApi(
+      baseUrl: 'https://growvia.example/api/v1',
+      client: MockClient((request) async {
+        expect(request.url.path, '/api/v1/readings');
+        expect(request.url.queryParameters['node'], 'node2');
+        expect(request.url.queryParameters['metric'], 'soil_moisture');
+        expect(request.url.queryParameters['from'], '2026-11-04');
+        expect(request.url.queryParameters['to'], '2026-11-10');
+        expect(request.url.queryParameters['limit'], '500');
+        expect(request.headers['Authorization'], 'Bearer test-token');
+        return http.Response(jsonEncode({'data': []}), 200);
+      }),
+    );
+    addTearDown(api.close);
+    final records = await api.readings(
+      'test-token',
+      node: 'node2',
+      metric: 'soil_moisture',
+      from: DateTime.utc(2026, 11, 4, 13, 45),
+      to: DateTime.utc(2026, 11, 10, 2, 30),
+      limit: 500,
+    );
+    expect(records, isEmpty);
+  });
+
   test('logout revokes the current API token and accepts 204', () async {
     final api = GrowviaApi(
       baseUrl: 'https://growvia.example/api/v1',
@@ -174,5 +200,125 @@ void main() {
     ]) {
       expect(() => GrowviaApi(baseUrl: url), throwsA(isA<ApiException>()));
     }
+  });
+
+  test('backups parses schedule, state, and file list strictly', () async {
+    final api = GrowviaApi(
+      baseUrl: 'https://growvia.example/api/v1',
+      client: MockClient((request) async {
+        expect(request.url.path, '/api/v1/backups');
+        expect(request.method, 'GET');
+        expect(request.headers['Authorization'], 'Bearer test-token');
+        return http.Response(
+          jsonEncode({
+            'backups': [
+              {
+                'name': 'growvia-20261112-063000.sql',
+                'size': 24576,
+                'created_at': '2026-11-12T06:30:00+00:00',
+              },
+            ],
+            'state': {
+              'last_run': '2026-11-12T06:30:00+00:00',
+              'last_status': 'ok',
+              'last_error': null,
+              'last_file': 'growvia-20261112-063000.sql',
+            },
+            'schedule': {
+              'backup_schedule': 'daily@02:30',
+              'backup_keep_days': '7',
+            },
+            'formats': ['sql', 'sql.gz', 'tgz'],
+          }),
+          200,
+        );
+      }),
+    );
+    addTearDown(api.close);
+    final data = await api.backups('test-token');
+    expect(data.files.single.name, 'growvia-20261112-063000.sql');
+    expect(data.files.single.size, 24576);
+    expect(data.state.lastStatus, 'ok');
+    expect(data.schedule, 'daily@02:30');
+    expect(data.keepDays, '7');
+    expect(data.formats, ['sql', 'sql.gz', 'tgz']);
+  });
+
+  test('backups rejects malformed server payloads', () async {
+    for (final body in [
+      '{"backups":[{"name":"evil.php","size":1,"created_at":"x"}],"state":{},"schedule":{"backup_schedule":"","backup_keep_days":"7"},"formats":["sql"]}',
+      '{"backups":[],"state":{"last_status":"weird"},"schedule":{"backup_schedule":"","backup_keep_days":"7"},"formats":["sql"]}',
+      '{"backups":[],"state":{},"schedule":{"backup_schedule":"hourly@9","backup_keep_days":"7"},"formats":["sql"]}',
+      '{"backups":[],"state":{},"schedule":{"backup_schedule":"","backup_keep_days":"abc"},"formats":["sql"]}',
+      '{"backups":[],"state":{},"schedule":{"backup_schedule":"","backup_keep_days":"7"},"formats":["exe"]}',
+    ]) {
+      final api = GrowviaApi(
+        baseUrl: 'https://growvia.example/api/v1',
+        client: MockClient((_) async => http.Response(body, 200)),
+      );
+      addTearDown(api.close);
+      await expectLater(api.backups('test-token'), throwsA(isA<ApiException>()));
+    }
+  });
+
+  test('createBackup posts and deleteBackup validates the file name', () async {
+    final api = GrowviaApi(
+      baseUrl: 'https://growvia.example/api/v1',
+      client: MockClient((request) async {
+        expect(request.method, 'POST');
+        return http.Response(
+          jsonEncode({
+            'backup': {
+              'name': 'growvia-20261112-070000.sql',
+              'size': 2048,
+              'created_at': '2026-11-12T07:00:00+00:00',
+            },
+            'message': 'Backup dibuat',
+          }),
+          201,
+        );
+      }),
+    );
+    addTearDown(api.close);
+    final created = await api.createBackup('test-token');
+    expect(created.backup.name, 'growvia-20261112-070000.sql');
+    expect(created.backup.size, 2048);
+    expect(created.message, 'Backup dibuat');
+    await expectLater(
+      api.deleteBackup('test-token', '../secrets.sql'),
+      throwsA(
+        isA<ApiException>().having(
+          (e) => e.message,
+          'message',
+          'Nama berkas backup tidak valid.',
+        ),
+      ),
+    );
+  });
+
+  test('downloadBackup fetches raw bytes with format and rejects bad input', () async {
+    final api = GrowviaApi(
+      baseUrl: 'https://growvia.example/api/v1',
+      client: MockClient((request) async {
+        expect(
+          request.url.toString(),
+          'https://growvia.example/api/v1/backups/growvia-20261112-063000.sql/download?format=sql.gz',
+        );
+        expect(request.headers['Accept'], 'application/octet-stream');
+        expect(request.headers['Authorization'], 'Bearer test-token');
+        return http.Response.bytes([1, 2, 3], 200);
+      }),
+    );
+    addTearDown(api.close);
+    final bytes = await api.downloadBackup(
+      'test-token',
+      'growvia-20261112-063000.sql',
+      'sql.gz',
+    );
+    expect(bytes, [1, 2, 3]);
+    await expectLater(
+      api.downloadBackup('test-token', 'growvia-20261112-063000.sql', 'exe'),
+      throwsA(isA<ApiException>()),
+    );
   });
 }

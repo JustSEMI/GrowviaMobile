@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/app_controller.dart';
 import '../core/tokens.dart';
+import '../data/reading.dart';
 import '../ui/charts.dart';
 import '../ui/components.dart';
 import '../ui/dashboard_components.dart';
@@ -9,6 +10,7 @@ import '../ui/growvia_components.dart';
 import '../ui/growvia_icon.dart';
 import 'account_page.dart';
 import 'activity_page.dart';
+import 'backup_page.dart';
 import 'guide_page.dart';
 import 'node_detail_page.dart';
 import 'system_settings_page.dart';
@@ -28,10 +30,25 @@ class DashboardPage extends StatelessWidget {
     ]);
   }
 
+  /// Waktu pencatatan terbaru di seluruh pembacaan, format `dd/MM HH:mm UTC`.
+  static String _latestStamp(List<Reading> readings) {
+    final latest = readings
+        .map((r) => r.recordedAt)
+        .reduce((a, b) => a.isAfter(b) ? a : b);
+    String two(int value) => value.toString().padLeft(2, '0');
+    return '${two(latest.day)}/${two(latest.month)} '
+        '${two(latest.hour)}:${two(latest.minute)} UTC';
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = controller;
     final t = GrowviaTokens.of(context);
+    final temperatureSeries = c.readings
+        .where(
+          (r) => r.metric == 'temperature' && r.node == 'node1' && r.unit == '°C',
+        )
+        .toList();
     return RefreshIndicator(
       onRefresh: c.preview ? () async {} : _refresh,
       child: PageBody(
@@ -99,6 +116,20 @@ class DashboardPage extends StatelessWidget {
                     .firstOrNull,
               ),
               MetricCard(
+                label: 'Kelembapan udara',
+                unit: '%',
+                icon: 'drop',
+                tone: 'blue',
+                reading: c.readings
+                    .where(
+                      (r) =>
+                          r.metric == 'humidity' &&
+                          r.node == 'node1' &&
+                          r.unit == '%',
+                    )
+                    .firstOrNull,
+              ),
+              MetricCard(
                 label: 'Kelembapan tanah',
                 unit: '%',
                 icon: 'leaf',
@@ -125,11 +156,19 @@ class DashboardPage extends StatelessWidget {
                     )
                     .firstOrNull,
               ),
-              const MetricCard(
+              MetricCard(
                 label: 'Status pompa',
                 icon: 'power',
                 tone: 'neutral',
                 note: 'Status perangkat belum tersedia',
+                reading: c.readings
+                    .where((r) => r.metric == 'pump' && r.node == 'node2')
+                    .firstOrNull
+                    ?.asStateReading(),
+                valueText: c.readings
+                    .where((r) => r.metric == 'pump' && r.node == 'node2')
+                    .firstOrNull
+                    ?.stateLabel,
               ),
             ],
           ),
@@ -154,7 +193,7 @@ class DashboardPage extends StatelessWidget {
               error: true,
             ),
           ],
-          if (!c.preview)
+          if (!c.preview) ...[
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Align(
@@ -172,24 +211,44 @@ class DashboardPage extends StatelessWidget {
                 ),
               ),
             ),
+            if (c.readings.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Data terakhir tercatat ${_latestStamp(c.readings)}',
+                    style: TextStyle(fontSize: 12, color: t.secondary),
+                  ),
+                ),
+              ),
+          ],
           const SizedBox(height: 20),
 
-          // Grafik kosong, sama seperti `<x-empty-chart>` di web.
-          GrowviaEmptyChart(
-            title: 'Tren suhu udara',
-            subtitle: 'Riwayat pembacaan sensor',
-            node: 'Node1',
-            period: '24 jam',
-            cta: c.preview
-                ? null
-                : GrowviaTextLink(
-                    label: 'Perbarui data',
-                    icon: 'refresh',
-                    onTap: c.loadingReadings || c.loadingWorkspace
-                        ? null
-                        : _refresh,
-                  ),
-          ),
+          // Grafik kosong saat belum ada data, sama seperti `<x-empty-chart>`
+          // di web; begitu ada pembacaan suhu, tampilkan tren sungguhan.
+          if (temperatureSeries.isEmpty)
+            GrowviaEmptyChart(
+              title: 'Tren suhu udara',
+              subtitle: 'Riwayat pembacaan sensor',
+              node: 'Node1',
+              period: '24 jam',
+              cta: c.preview
+                  ? null
+                  : GrowviaTextLink(
+                      label: 'Perbarui data',
+                      icon: 'refresh',
+                      onTap: c.loadingReadings || c.loadingWorkspace
+                          ? null
+                          : _refresh,
+                    ),
+            )
+          else
+            ReadingChart(
+              key: const Key('dashboard-temperature-chart'),
+              title: 'Tren suhu udara · Node1',
+              readings: temperatureSeries,
+            ),
           const SizedBox(height: 20),
           const GrowviaNodeStatus(),
           const SizedBox(height: 20),
@@ -364,6 +423,14 @@ class DashboardPage extends StatelessWidget {
                 onTap: () => _open(context, SystemSettingsPage(controller: c)),
               ),
               const SizedBox(height: 12),
+              GrowviaLinkTile(
+                key: const Key('open-backup'),
+                title: 'Backup database',
+                subtitle: 'Jadwal cadangan, unduh berkas, dan status',
+                icon: 'tank',
+                onTap: () => _open(context, BackupPage(controller: c)),
+              ),
+              const SizedBox(height: 12),
             ],
             GrowviaLinkTile(
               key: const Key('open-account'),
@@ -471,4 +538,19 @@ class _Count extends StatelessWidget {
       ),
     ],
   );
+}
+
+/// Metrik status (pompa) bernilai 0/1 dengan unit `state`; kartu butuh
+/// unit kosong supaya dianggap valid dan teks status yang terbaca.
+extension _StatusReading on Reading {
+  Reading asStateReading() => Reading(
+    id: id,
+    node: node,
+    metric: metric,
+    value: value,
+    unit: '',
+    recordedAt: recordedAt,
+  );
+
+  String get stateLabel => value >= 0.5 ? 'Menyala' : 'Mati';
 }

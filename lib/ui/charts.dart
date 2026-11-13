@@ -2,26 +2,37 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../core/tokens.dart';
 import '../data/reading.dart';
 import 'components.dart';
 
 class ReadingChart extends StatelessWidget {
-  const ReadingChart({required this.readings, super.key});
+  const ReadingChart({
+    required this.readings,
+    this.title,
+    super.key,
+  });
   final List<Reading> readings;
+
+  /// Judul kustom (mis. `Suhu udara · 24 jam`). Bila kosong, judul diambil
+  /// dari pembacaan pertama seperti sebelumnya.
+  final String? title;
 
   @override
   Widget build(BuildContext context) {
     final ordered = [...readings]
       ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
     final scheme = Theme.of(context).colorScheme;
+    final tokens = GrowviaTokens.of(context);
     return Panel(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            ordered.isEmpty
-                ? 'Tren pembacaan'
-                : '${ordered.first.label} · ${ordered.first.node}',
+            title ??
+                (ordered.isEmpty
+                    ? 'Tren pembacaan'
+                    : '${ordered.first.label} · ${ordered.first.node}'),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
@@ -45,7 +56,7 @@ class ReadingChart extends StatelessWidget {
                   painter: _TrendPainter(
                     ordered,
                     scheme.primary,
-                    scheme.outlineVariant,
+                    tokens.chartGrid,
                   ),
                 ),
               ),
@@ -54,7 +65,8 @@ class ReadingChart extends StatelessWidget {
           if (ordered.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              'Rentang data: ${ordered.map((r) => r.value).reduce(math.min)}–${ordered.map((r) => r.value).reduce(math.max)} ${ordered.first.unit}',
+              'Rentang data: ${_fmt(_min(ordered))}–${_fmt(_max(ordered))} ${ordered.first.unit} · '
+              'Rata-rata ${_fmt(_avg(ordered))} ${ordered.first.unit}',
               style: TextStyle(color: scheme.onSurfaceVariant),
             ),
             const SizedBox(height: 8),
@@ -91,6 +103,19 @@ class ReadingChart extends StatelessWidget {
 
   String _time(DateTime value) =>
       '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')} ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+
+  static double _min(List<Reading> readings) =>
+      readings.map((r) => r.value).reduce(math.min);
+
+  static double _max(List<Reading> readings) =>
+      readings.map((r) => r.value).reduce(math.max);
+
+  static double _avg(List<Reading> readings) =>
+      readings.map((r) => r.value).reduce((a, b) => a + b) / readings.length;
+
+  static String _fmt(double value) => value == value.roundToDouble()
+      ? value.toStringAsFixed(0)
+      : value.toStringAsFixed(1);
 }
 
 class _TrendPainter extends CustomPainter {

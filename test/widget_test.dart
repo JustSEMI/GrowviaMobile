@@ -55,7 +55,7 @@ void main() {
 
     expect(find.text('Masuk ke Growvia'), findsOneWidget);
     expect(find.text('Lihat pratinjau tanpa akun'), findsNothing);
-    expect(find.textContaining('Tujuan API sudah diatur'), findsOneWidget);
+    expect(find.textContaining('Tujuan API sudah diatur'), findsNothing);
     expect(find.text('Hello World!'), findsNothing);
     expect(find.byType(TextFormField), findsNWidgets(2));
   });

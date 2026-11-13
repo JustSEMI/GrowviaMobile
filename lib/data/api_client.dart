@@ -306,6 +306,85 @@ class GrowviaApi {
     'current_password': currentPassword,
   });
 
+  Future<BackupData> backups(String token) async {
+    final json = await _json('GET', 'backups', token: token);
+    return _parse(() => BackupData.fromJson(json));
+  }
+
+  Future<({BackupFile backup, String message})> createBackup(
+    String token,
+  ) async {
+    final json = await _json('POST', 'backups', token: token);
+    return _parse(() {
+      final backup = BackupFile.fromJson(jsonObject(json['backup']));
+      final message = jsonValue<String>(json, 'message');
+      return (backup: backup, message: message);
+    });
+  }
+
+  Future<void> deleteBackup(String token, String name) async {
+    if (!RegExp(r'^growvia-\d{8}-\d{6}\.sql$').hasMatch(name)) {
+      throw const ApiException('Nama berkas backup tidak valid.');
+    }
+    await _json('DELETE', 'backups/$name', token: token);
+  }
+
+  Future<List<int>> downloadBackup(
+    String token,
+    String name,
+    String format,
+  ) async {
+    _parse(() => _token(token));
+    if (!['sql', 'sql.gz', 'tgz'].contains(format)) {
+      throw const ApiException('Format unduhan backup tidak dikenal.');
+    }
+    if (!RegExp(r'^growvia-\d{8}-\d{6}\.sql$').hasMatch(name)) {
+      throw const ApiException('Nama berkas backup tidak valid.');
+    }
+    final request = http.Request(
+        'GET',
+        base.resolve(_query('backups/$name/download', {'format': format})),
+      )
+      ..followRedirects = false
+      ..headers['Accept'] = 'application/octet-stream'
+      ..headers['Authorization'] = 'Bearer $token';
+    try {
+      final streamed = await _client.send(request).timeout(timeout);
+      final response = await http.Response.fromStream(
+        streamed,
+      ).timeout(timeout);
+      if (response.statusCode == 401) {
+        throw const ApiException(
+          'Sesi telah berakhir. Masuk kembali untuk melanjutkan.',
+          status: 401,
+        );
+      }
+      if (response.statusCode == 403) {
+        throw const ApiException(
+          'Akun ini tidak diizinkan mengakses data tersebut.',
+          status: 403,
+        );
+      }
+      if (response.statusCode == 404) {
+        throw const ApiException('Berkas backup tidak ditemukan.', status: 404);
+      }
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw const ApiException(
+          'Server belum dapat memproses permintaan. Coba kembali nanti.',
+        );
+      }
+      return response.bodyBytes;
+    } on TimeoutException {
+      throw const ApiException(
+        'Server terlalu lama merespons. Periksa koneksi lalu coba kembali.',
+      );
+    } on http.ClientException {
+      throw const ApiException(
+        'Tidak dapat menghubungi server. Periksa alamat API dan koneksi.',
+      );
+    }
+  }
+
   Future<void> requestPasswordReset(String email) async {
     final json = await _json(
       'POST',
@@ -334,10 +413,23 @@ class GrowviaApi {
     _parse(() => jsonValue<String>(json, 'message'));
   }
 
-  Future<List<Reading>> readings(String token, {String? node}) async {
+  Future<List<Reading>> readings(
+    String token, {
+    String? node,
+    String? metric,
+    DateTime? from,
+    DateTime? to,
+    int? limit,
+  }) async {
     final endpoint = Uri(
       path: 'readings',
-      queryParameters: {'node': ?node},
+      queryParameters: {
+        'node': ?node,
+        'metric': ?metric,
+        'from': ?from?.toUtc().toIso8601String().substring(0, 10),
+        'to': ?to?.toUtc().toIso8601String().substring(0, 10),
+        'limit': ?limit?.toString(),
+      },
     ).toString();
     final response = await _json('GET', endpoint, token: token);
     final data = response['data'];

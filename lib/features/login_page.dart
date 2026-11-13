@@ -24,7 +24,7 @@ const BoxConstraints _fieldIconConstraints = BoxConstraints(
 ///
 /// `InputDecorator` membungkus `prefixIcon` dengan constraint minimum 48px.
 /// Tanpa [Center], [GrowviaIcon] ikut melar ke 48px dan painter-nya
-/// menskalakan viewBox 24 menjadi 48 — ikon tampil dua kali lebih besar
+/// menskalakan viewBox 24 menjadi 48, ikon tampil dua kali lebih besar
 /// daripada ikon tombol mata di field yang sama.
 class _FieldPrefixIcon extends StatelessWidget {
   const _FieldPrefixIcon(this.icon);
@@ -88,16 +88,13 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final preferences = widget.controller.preferences;
     final configured = preferences.apiUrl.isNotEmpty;
-    final localHttp = preferences.endpointPolicy.isLocalHttp(
-      preferences.apiUrl,
-    );
     final t = GrowviaTokens.of(context);
     return Scaffold(
       backgroundColor: t.surface,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= 900;
-          final form = _formPanel(context, preferences, configured, localHttp);
+          final form = _formPanel(context, preferences, configured);
           if (!wide) {
             return SafeArea(
               child: Column(
@@ -297,7 +294,6 @@ class _LoginPageState extends State<LoginPage> {
     BuildContext context,
     AppPreferences preferences,
     bool configured,
-    bool localHttp,
   ) {
     return AutofillGroup(
       child: Form(
@@ -390,17 +386,16 @@ class _LoginPageState extends State<LoginPage> {
                 message: widget.controller.message!,
               ),
             ],
-            const SizedBox(height: 24),
-            Notice(
-              title: localHttp
-                  ? 'HTTP lokal · khusus debug'
-                  : configured
-                  ? 'Tujuan API sudah diatur'
-                  : 'Backend belum terhubung',
-              message: configured
-                  ? '${localHttp ? 'HTTP tidak terenkripsi dan hanya diizinkan untuk server lokal pada build debug. ' : ''}Masuk mengirim email dan kata sandi ke ${preferences.apiUrl}. Koneksi belum diverifikasi; akun diperiksa saat masuk.'
-                  : 'Atur alamat API mobile lokal atau HTTPS, lalu masuk dengan akun Growvia yang sama seperti website.',
-            ),
+            // Kartu status API hanya muncul saat backend belum terhubung;
+            // info "Tujuan API sudah diatur" dianggap mengganggu dan dihapus.
+            if (!configured) ...[
+              const SizedBox(height: 24),
+              const Notice(
+                title: 'Backend belum terhubung',
+                message:
+                    'Atur alamat API mobile lokal atau HTTPS, lalu masuk dengan akun Growvia yang sama seperti website.',
+              ),
+            ],
             TextButton.icon(
               onPressed: _busy
                   ? null

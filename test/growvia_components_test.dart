@@ -31,10 +31,10 @@ void main() {
     test('nilai token mengikuti light-dark CSS', () {
       // Beberapa nilai kunci, dibandingkan langsung dengan app.css.
       expect(GrowviaTokens.light.canvas, const Color(0xfff7f6f3));
-      expect(GrowviaTokens.dark.canvas, const Color(0xff171b18));
-      expect(GrowviaTokens.light.brandSurface, const Color(0xff263c2e));
+      expect(GrowviaTokens.dark.canvas, const Color(0xff0f1310));
+      expect(GrowviaTokens.light.brandSurface, const Color(0xff203625));
       expect(GrowviaTokens.dark.brandSurface, const Color(0xff324836));
-      expect(GrowviaTokens.light.navActive, const Color(0xff24492c));
+      expect(GrowviaTokens.light.navActive, const Color(0xff1f4026));
       expect(GrowviaTokens.dark.navActive, const Color(0xffc9e6bb));
       expect(GrowviaTokens.light.scrim, const Color(0x6b141c16));
       expect(GrowviaTokens.dark.scrim, const Color(0xb8070b08));
@@ -188,7 +188,7 @@ void main() {
       'semua jalur ilustrasi bisa diparse dan berada di viewBox 360x240',
       () {
         // Membuktikan geometri dari garden-art.blade.php benar-benar terbaca,
-        // sehingga ilustrasi tergambar — bukan kotak kosong.
+        // sehingga ilustrasi tergambar, bukan kotak kosong.
         final all = <String>[
           ...GrowviaGardenArt.filledPaths,
           ...GrowviaGardenArt.strokedPaths,

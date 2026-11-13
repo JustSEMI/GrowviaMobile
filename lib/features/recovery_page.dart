@@ -284,10 +284,6 @@ class _RecoveryPageState extends State<RecoveryPage> {
             message: 'Gunakan halaman Akun saya untuk mengganti kata sandi, atau keluar sebelum melakukan pemulihan.',
           )
         else ...[
-          const Notice(
-            title: 'Catatan pengiriman lokal',
-            message: 'Aplikasi tidak dapat memastikan email sudah terkirim. Pada server lokal, mailer log/array mungkin hanya menyimpan email di server dan tidak mengirimkannya ke kotak masuk. Hubungi administrator; konfigurasi mailer tidak diubah di sini.',
-          ),
           if (failure != null) ManagementError(failure: failure!),
           if (receipt != null)
             Semantics(

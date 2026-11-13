@@ -1,4 +1,4 @@
-// GENERATED — jangan diubah manual.
+// GENERATED, jangan diubah manual.
 // Sumber: Growvia/resources/views/components/icon.blade.php
 // Regenerasi: python Tools/growvia-mobile/generate_icons.py
 

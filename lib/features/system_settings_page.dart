@@ -18,9 +18,6 @@ const _fields = {
     'th_suhu_max': 'Suhu maksimum (°C)',
     'th_hum_min': 'Kelembapan minimum (%)',
     'th_hum_max': 'Kelembapan maksimum (%)',
-    'th_light_min': 'Cahaya minimum (klux)',
-    'th_co2_min': 'CO2 minimum (ppm)',
-    'th_co2_max': 'CO2 maksimum (ppm)',
   },
   'soil': {
     'soil_on': 'Mulai menyiram di bawah (%)',
@@ -31,7 +28,6 @@ const _fields = {
   },
   'notifications': {
     'notif_pompa': 'Perubahan status pompa',
-    'notif_cahaya': 'Cahaya di bawah ambang',
     'notif_tandon': 'Persediaan air rendah',
     'notif_offline': 'Node tidak terhubung',
   },
@@ -156,17 +152,12 @@ class _SystemSettingsPageState
             (number < 0 || number > 100)) {
           errors[key] = ['Persentase harus 0–100.'];
         }
-        if (['th_light_min', 'th_co2_min', 'th_co2_max'].contains(key) &&
-            number < 0) {
-          errors[key] = ['Nilai tidak boleh negatif.'];
-        }
         values[key] = number;
       }
     }
     for (final pair in [
       ['th_suhu_min', 'th_suhu_max'],
       ['th_hum_min', 'th_hum_max'],
-      ['th_co2_min', 'th_co2_max'],
       ['soil_on', 'soil_off'],
     ]) {
       if (values[pair[0]] is num &&

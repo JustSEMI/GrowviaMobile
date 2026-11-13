@@ -55,7 +55,8 @@ class _SettingsPageState extends State<SettingsPage> {
       await widget.preferences.save(_url.text, _theme);
       if (!mounted) return;
       setState(
-        () => _receipt = 'Tersimpan di perangkat ini. Tidak ada permintaan ke server. Koneksi belum diverifikasi; verifikasi akun dilakukan saat masuk.',
+        () => _receipt =
+            'Tersimpan di perangkat ini. Koneksi belum diverifikasi; verifikasi akun dilakukan saat masuk.',
       );
     } catch (_) {
       if (mounted) {
@@ -73,8 +74,7 @@ class _SettingsPageState extends State<SettingsPage> {
       const PageIntro(
         eyebrow: 'Preferensi lokal',
         title: 'Pengaturan perangkat ini',
-        description:
-            'Konfigurasi aplikasi terpisah dari pengaturan perangkat rumah kaca.',
+        description: 'Atur alamat server dan tema tampilan aplikasi.',
       ),
       const SizedBox(height: 24),
       if (preferences.storageError != null) ...[
@@ -95,25 +95,17 @@ class _SettingsPageState extends State<SettingsPage> {
                 'Koneksi REST API',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Isi alamat API milikmu, bukan URL halaman login website. Tidak ada permintaan yang dikirim saat menyimpan.',
-              ),
-              if (preferences.endpointPolicy.localHttpAllowed) ...[
-                const SizedBox(height: 12),
-                const Notice(
-                  title: 'HTTP lokal · khusus debug',
-                  message:
-                      'HTTP tidak terenkripsi. USB dengan adb reverse tcp:8000 tcp:8000: gunakan http://127.0.0.1:8000/api/v1 atau http://localhost:8000/api/v1. Android Emulator: gunakan http://10.0.2.2:8000/api/v1. Hanya tiga host lokal ini yang diizinkan; build release/profile wajib HTTPS.',
-                ),
-              ],
               const SizedBox(height: 20),
               TextFormField(
                 key: const Key('api-url'),
                 controller: _url,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Alamat API',
                   hintText: 'https://domain-kamu/api/v1',
+                  helperText:
+                      preferences.endpointPolicy.localHttpAllowed
+                      ? 'USB: http://127.0.0.1:8000/api/v1 · Emulator: http://10.0.2.2:8000/api/v1'
+                      : null,
                 ),
                 keyboardType: TextInputType.url,
                 autocorrect: false,
@@ -125,7 +117,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                'API mobile lokal menggunakan Laravel Sanctum dan akun Growvia yang sama seperti website setelah server dijalankan. Koneksi belum diverifikasi sampai akun berhasil masuk. Perubahan alamat berlaku untuk login berikutnya, bukan sesi yang sedang aktif.',
+                'Perubahan alamat berlaku untuk login berikutnya.',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -171,13 +163,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
       const SizedBox(height: 20),
-      const Notice(
-        title: 'MQTT belum diaktifkan',
-        message:
-            'Koneksi sensor dan kontrol pompa belum dikerjakan. Tidak ada kredensial broker yang disimpan di aplikasi.',
-      ),
-      const SizedBox(height: 20),
-      const Text('Growvia Mobile · 0.1.0\nBahasa Indonesia · Android & iOS'),
+      const Text('Growvia Mobile · 0.1.0\nBahasa Indonesia · Android'),
     ];
 
     if (widget.embedded) {

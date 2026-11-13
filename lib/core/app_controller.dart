@@ -213,6 +213,15 @@ class AppController extends ChangeNotifier {
       next = await api.login(email, password);
       if (_disposed || generation != _generation) return;
       final credential = next;
+      // Buka ruang kerja SEKETIKA: UI tidak boleh menunggu secure storage,
+      // yang bisa lambat atau macet di perangkat nyata. Persist tetap
+      // terserialisasi di bawah; bila gagal, sesi dicabut di `finally`.
+      _api = api;
+      _sessionBase = base;
+      session = credential;
+      preview = false;
+      message = null;
+      _notify();
       adopted = await _store(() async {
         if (_disposed || generation != _generation) return false;
         try {
@@ -230,26 +239,27 @@ class AppController extends ChangeNotifier {
             'Sesi tidak dapat disimpan dengan aman. Silakan masuk kembali.',
           );
         }
-        if (_disposed || generation != _generation) {
-          try {
-            await storage.delete(key: 'growvia.session');
-          } catch (_) {
-            /* Closed. */
-          }
-          return false;
-        }
-        _api = api;
-        _sessionBase = base;
-        session = credential;
-        preview = false;
-        message = null;
         return true;
-      });
-      if (!adopted) return;
-      _notify();
+        // Antrean storage tidak boleh menggantung alur login selamanya:
+        // operasi platform yang tak selesai dalam 10 detik dianggap gagal.
+      }).timeout(const Duration(seconds: 10), onTimeout: () => false);
+      if (!adopted) {
+        if (generation == _generation && message == null) {
+          message =
+              'Sesi tidak dapat disimpan dengan aman. Silakan masuk kembali.';
+        }
+        return;
+      }
       await refresh(); // Pertahankan urutan alur request login asli.
     } finally {
-      if (!adopted && next != null) await _revoke(api, next.token);
+      if (!adopted && next != null) {
+        // Simpan gagal/dibatalkan: cabut kredensial baru. Bersihkan sesi
+        // optimistis hanya bila sesi ini masih yang aktif.
+        if (generation == _generation && session == next) {
+          _clearPrivate();
+        }
+        await _revoke(api, next.token);
+      }
       authenticating = false;
       _notify();
     }
@@ -264,7 +274,9 @@ class AppController extends ChangeNotifier {
     try {
       final next = await _read(
         access,
-        () => access.api.readings(access.session.token),
+        // Batas atas API (/v1/readings) supaya rentang grafik 7 hari tidak
+        // terpotong di 300 pembacaan bawaan.
+        () => access.api.readings(access.session.token, limit: 1000),
       );
       _check(access);
       readings = next;
@@ -352,6 +364,31 @@ class AppController extends ChangeNotifier {
   Future<Map<String, String>> loadSystemSettings() async {
     final access = _access();
     return _read(access, () => access.api.systemSettings(access.session.token));
+  }
+
+  Future<BackupData> loadBackups() async {
+    final access = _access();
+    return _read(access, () => access.api.backups(access.session.token));
+  }
+
+  Future<({BackupFile backup, String message})> createBackup() async {
+    final access = _access();
+    return _read(access, () => access.api.createBackup(access.session.token));
+  }
+
+  Future<void> deleteBackup(String name) async {
+    final access = _access();
+    return _read(access, () async {
+      await access.api.deleteBackup(access.session.token, name);
+    });
+  }
+
+  Future<List<int>> downloadBackup(String name, String format) async {
+    final access = _access();
+    return _read(
+      access,
+      () => access.api.downloadBackup(access.session.token, name, format),
+    );
   }
 
   Future<ApiPage<DeviceSession>> loadSessions({int page = 1}) async {

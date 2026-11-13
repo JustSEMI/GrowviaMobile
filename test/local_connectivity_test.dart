@@ -17,7 +17,7 @@ void main() {
     FlutterSecureStorage.setMockInitialValues({});
   });
 
-  testWidgets('default local login is visibly debug-only and unverified', (
+  testWidgets('default local login stays silent and sends nothing', (
     tester,
   ) async {
     final requests = <http.Request>[];
@@ -30,12 +30,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('HTTP lokal · khusus debug'), findsOneWidget);
-    expect(find.textContaining('Koneksi belum diverifikasi'), findsOneWidget);
-    expect(
-      find.textContaining('API mobile Laravel belum tersedia'),
-      findsNothing,
-    );
+    // Kartu status API dihapus dari layar masuk atas permintaan pengguna;
+    // tetap dipastikan tidak ada permintaan jaringan tersembunyi di sini.
+    expect(find.text('HTTP lokal · khusus debug'), findsNothing);
+    expect(find.textContaining('Koneksi belum diverifikasi'), findsNothing);
+    expect(find.text('Backend belum terhubung'), findsNothing);
     expect(requests, isEmpty);
   });
 
