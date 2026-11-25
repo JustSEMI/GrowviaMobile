@@ -11,7 +11,7 @@ class ApiEndpoint {
   static const localHosts = {'127.0.0.1', 'localhost', '10.0.2.2'};
 
   /// URL produksi bawaan untuk build release/profile.
-  static const productionBaseUrl = 'https://growvia.justsemi.ai.id/api/v1';
+  static const productionBaseUrl = 'https://growvia.justsemi.my.id/api/v1';
 
   /// Override saat build: `--dart-define=GROWVIA_API_URL=...`.
   static const overrideBaseUrl = String.fromEnvironment('GROWVIA_API_URL');

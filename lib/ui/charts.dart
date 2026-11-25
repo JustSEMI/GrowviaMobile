@@ -241,7 +241,7 @@ class MoistureGauge extends StatelessWidget {
         const SizedBox(height: 16),
         Text(
           valid
-              ? 'Pembacaan tersimpan · bukan realtime'
+              ? 'Pembacaan tersimpan · MQTT langsung saat aktif'
               : 'Belum ada pembacaan',
           style: Theme.of(context).textTheme.titleMedium,
           textAlign: TextAlign.center,

@@ -141,7 +141,7 @@ class _NodeDetailPageState extends State<NodeDetailPage> {
                   title: 'Data sensor tersimpan',
                   success: true,
                   message:
-                      '${inRange.length} pembacaan node ini dalam rentang $rangeLabel. Sumber REST API Laravel, bukan realtime.',
+                      '${inRange.length} pembacaan node ini dalam rentang $rangeLabel. Gabungan REST API dan MQTT langsung.',
                 ),
               const SizedBox(height: 20),
               ResponsiveTiles(

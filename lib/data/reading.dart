@@ -1,3 +1,22 @@
+/// Pasangan metric dan satuannya, sama dengan `Reading::METRICS` di backend.
+/// Payload MQTT perangkat memakai key yang identik dengan map ini.
+const Map<String, String> kMetricUnits = {
+  'temperature': '°C',
+  'humidity': '%',
+  'temperature2': '°C',
+  'humidity2': '%',
+  'light': 'klux',
+  'co2': 'ppm',
+  'soil_moisture': '%',
+  'soil_moisture2': '%',
+  'soil_moisture3': '%',
+  'soil_temperature': '°C',
+  'water_level': '%',
+  'pump': 'state',
+  'fan1': 'state',
+  'fan2': 'state',
+};
+
 class Reading {
   const Reading({
     required this.id,

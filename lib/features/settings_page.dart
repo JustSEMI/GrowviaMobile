@@ -58,7 +58,8 @@ class _SettingsPageState extends State<SettingsPage> {
         () => _receipt =
             'Tersimpan di perangkat ini. Koneksi belum diverifikasi; verifikasi akun dilakukan saat masuk.',
       );
-    } catch (_) {
+    } catch (error) {
+      debugPrint('GROWVIA_PREFS_SAVE_FAIL: $error');
       if (mounted) {
         setState(() => _error = 'Pengaturan belum tersimpan. Coba kembali.');
       }

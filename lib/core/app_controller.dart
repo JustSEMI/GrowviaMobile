@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../data/api_client.dart';
+import '../data/mqtt_service.dart';
 import '../data/reading.dart';
 import '../data/workspace_models.dart';
 import 'preferences.dart';
@@ -17,10 +18,13 @@ class _Access {
 }
 
 class AppController extends ChangeNotifier {
-  AppController({http.Client? client, FlutterSecureStorage? storage})
-    : client = client ?? http.Client(),
-      _ownsClient = client == null,
-      storage = storage ?? const FlutterSecureStorage();
+  AppController({
+    http.Client? client,
+    FlutterSecureStorage? storage,
+    this.liveServiceFactory,
+  }) : client = client ?? http.Client(),
+       _ownsClient = client == null,
+       storage = storage ?? const FlutterSecureStorage();
 
   final AppPreferences preferences = AppPreferences();
   final http.Client client;
@@ -39,6 +43,13 @@ class AppController extends ChangeNotifier {
   String? dataError;
   String? workspaceError;
   String? message;
+  MqttLiveService? _live;
+  bool liveConnected = false;
+  String? liveError;
+
+  /// Pabrik sambungan MQTT live. Null mematikan langganan langsung:
+  /// dipasang di `main()` untuk produksi dan diganti palsu di test.
+  MqttLiveServiceFactory? liveServiceFactory;
   bool _disposed = false;
   int _generation = 0;
   int _workspaceRequest = 0;
@@ -81,6 +92,7 @@ class AppController extends ChangeNotifier {
   }
 
   void _clearPrivate() {
+    stopLive();
     session = null;
     _api = null;
     _sessionBase = null;
@@ -161,6 +173,7 @@ class AppController extends ChangeNotifier {
       _sessionBase = base;
       session = verified;
       await refresh();
+      startLive();
     } on ApiException catch (error) {
       if (_disposed || generation != _generation) return;
       message = 'Sesi belum dapat dipulihkan. ${error.message}';
@@ -251,6 +264,7 @@ class AppController extends ChangeNotifier {
         return;
       }
       await refresh(); // Pertahankan urutan alur request login asli.
+      startLive();
     } finally {
       if (!adopted && next != null) {
         // Simpan gagal/dibatalkan: cabut kredensial baru. Bersihkan sesi
@@ -291,6 +305,63 @@ class AppController extends ChangeNotifier {
         _notify();
       }
     }
+  }
+
+  /// Mulai langganan MQTT langsung (dipanggil saat sesi terbuka).
+  void startLive() {
+    if (_disposed || preview || session == null || _live != null) return;
+    final factory = liveServiceFactory;
+    if (factory == null) return;
+    final service = factory.call(
+      onReadings: applyLiveReadings,
+      onStatus: (connected, error) {
+        if (_disposed) return;
+        liveConnected = connected;
+        liveError = error;
+        _notify();
+      },
+    );
+    _live = service;
+    service.connect();
+  }
+
+  /// Tutup langganan MQTT langsung (sesi ditutup, keluar, atau ganti akun).
+  void stopLive() {
+    _live?.dispose();
+    _live = null;
+    liveConnected = false;
+    liveError = null;
+  }
+
+  /// Gabungkan pembacaan MQTT langsung ke daftar tersimpan:
+  /// urut terbaru dulu, satu timestamp per (node, metric), maksimum 120
+  /// pembacaan per metric supaya daftar tidak tumbuh tanpa batas.
+  void applyLiveReadings(List<Reading> incoming) {
+    if (_disposed || incoming.isEmpty) return;
+    final merged = [...readings, ...incoming];
+    merged.sort((a, b) {
+      final byTime = b.recordedAt.compareTo(a.recordedAt);
+      return byTime != 0 ? byTime : b.id.compareTo(a.id);
+    });
+    const perMetric = 120;
+    final counted = <String, int>{};
+    final seenStamps = <String>{};
+    final kept = <Reading>[];
+    for (final reading in merged) {
+      final stampKey =
+          '${reading.node}|${reading.metric}|'
+          '${reading.recordedAt.millisecondsSinceEpoch}';
+      if (!seenStamps.add(stampKey)) continue;
+      final count = counted.putIfAbsent(
+        '${reading.node}|${reading.metric}',
+        () => 0,
+      );
+      if (count >= perMetric) continue;
+      counted['${reading.node}|${reading.metric}'] = count + 1;
+      kept.add(reading);
+    }
+    readings = kept;
+    _notify();
   }
 
   Future<void> loadWorkspace() async {

@@ -35,7 +35,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('54%'), findsOneWidget);
-      expect(find.textContaining('bukan realtime'), findsOneWidget);
+      expect(find.textContaining('MQTT langsung'), findsOneWidget);
     },
   );
 

@@ -33,7 +33,8 @@ class AppPreferences extends ChangeNotifier {
         (value) => value.name == mode,
         orElse: () => ThemeMode.system,
       );
-    } catch (_) {
+    } catch (error) {
+      debugPrint('GROWVIA_PREFS_LOAD_FAIL: $error');
       // Kegagalan storage bukan bukti bahwa endpoint tidak tersimpan.
       apiUrl = '';
       storageError = 'Preferensi lokal tidak dapat dibaca. Atur ulang alamat API sebelum masuk.';

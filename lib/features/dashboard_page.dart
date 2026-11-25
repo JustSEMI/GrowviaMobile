@@ -76,7 +76,14 @@ class DashboardPage extends StatelessWidget {
                 tone: 'green',
                 dot: true,
               ),
-              const GrowviaBadge('Menunggu data'),
+              if (c.preview)
+                const GrowviaBadge('Menunggu data')
+              else
+                GrowviaBadge(
+                  c.liveConnected ? 'Live · MQTT' : 'Live nonaktif',
+                  tone: c.liveConnected ? 'green' : 'neutral',
+                  dot: true,
+                ),
             ],
           ),
           const SizedBox(height: 20),
@@ -94,7 +101,7 @@ class DashboardPage extends StatelessWidget {
             const SizedBox(height: 12),
             Notice(
               title: 'Halo, ${c.session!.name}',
-              message: 'Akun diverifikasi melalui REST API. Telemetri sensor belum diaktifkan; MQTT dan kontrol pompa belum aktif. Ini bukan status realtime.',
+              message: 'Akun diverifikasi melalui REST API. Data sensor masuk lewat MQTT langsung saat perangkat mengirim, dan riwayatnya tersimpan di server.',
             ),
           ],
           const SizedBox(height: 20),

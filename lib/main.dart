@@ -4,17 +4,21 @@ import 'package:http/http.dart' as http;
 
 import 'core/app_controller.dart';
 import 'core/theme.dart';
+import 'data/mqtt_service.dart';
 import 'features/login_page.dart';
 import 'features/workspace_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MainApp());
+  runApp(const MainApp(liveServiceFactory: defaultMqttLiveFactory));
 }
 
 class MainApp extends StatefulWidget {
-  const MainApp({this.client, super.key});
+  const MainApp({this.client, this.liveServiceFactory, super.key});
   final http.Client? client;
+
+  /// Pabrik MQTT live; null mematikan langganan langsung (dipakai di test).
+  final MqttLiveServiceFactory? liveServiceFactory;
   @override
   State<MainApp> createState() => _MainAppState();
 }
@@ -25,7 +29,10 @@ class _MainAppState extends State<MainApp> {
   @override
   void initState() {
     super.initState();
-    _controller = AppController(client: widget.client);
+    _controller = AppController(
+      client: widget.client,
+      liveServiceFactory: widget.liveServiceFactory,
+    );
     _controller.addListener(_updated);
     _controller.preferences.addListener(_updated);
     _controller.initialize();

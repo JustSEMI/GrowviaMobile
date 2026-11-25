@@ -217,7 +217,7 @@ void main() {
       expect(find.text('Mode pratinjau'), findsNothing);
       expect(find.text('Belum ada pembacaan'), findsOneWidget);
       expect(
-        find.textContaining('Telemetri sensor belum diaktifkan'),
+        find.textContaining('Data sensor masuk lewat MQTT langsung'),
         findsOneWidget,
       );
       final stored = jsonDecode(
