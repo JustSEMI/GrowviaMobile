@@ -18,6 +18,7 @@ class GrowviaBadge extends StatelessWidget {
     this.label, {
     this.tone = 'neutral',
     this.dot = false,
+    this.uppercase = true,
     super.key,
   });
 
@@ -28,6 +29,9 @@ class GrowviaBadge extends StatelessWidget {
 
   /// Menampilkan titik kecil di depan label (`.badge-dot`).
   final bool dot;
+
+  /// Huruf kapital penuh mengikuti CSS `.badge` web.
+  final bool uppercase;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +59,7 @@ class GrowviaBadge extends StatelessWidget {
           ],
           Flexible(
             child: Text(
-              label.toUpperCase(),
+              uppercase ? label.toUpperCase() : label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -322,11 +326,11 @@ class GrowviaConnectionNotice extends StatelessWidget {
               ));
     final content = Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: t.noticeSurface,
         border: Border.all(color: t.noticeLine),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: _HeadRow(
         lead: Row(
@@ -566,32 +570,55 @@ class _DashedGridPainter extends CustomPainter {
 
 /// Padanan `components/node-status.blade.php`.
 class GrowviaNodeStatus extends StatelessWidget {
-  const GrowviaNodeStatus({super.key});
+  const GrowviaNodeStatus({
+    this.node1Active = false,
+    this.node2Active = false,
+    this.liveConnected = false,
+    super.key,
+  });
+
+  final bool node1Active;
+  final bool node2Active;
+  final bool liveConnected;
 
   @override
   Widget build(BuildContext context) {
     final t = GrowviaTokens.of(context);
+    final anyData = node1Active || node2Active;
+    final footerText = liveConnected
+        ? 'Terhubung ke broker MQTT. Data langsung aktif.'
+        : anyData
+        ? 'Pembacaan tersimpan tersedia dari REST API.'
+        : 'Status koneksi belum dapat diperiksa.';
     return GrowviaPanel(
       title: 'Node rumah kaca',
-      subtitle: 'Dua area, satu ruang kerja.',
-      headerTrailing: GrowviaIcon('connection', size: 20, color: t.muted),
+      subtitle: 'Dua perangkat, satu ruang kerja.',
+      headerTrailing: GrowviaIcon(
+        'connection',
+        size: 20,
+        color: liveConnected ? t.green : t.muted,
+      ),
       footer: Text(
-        'Status koneksi belum dapat diperiksa.',
+        footerText,
         style: TextStyle(fontSize: 12, color: t.secondary),
       ),
       child: Column(
-        children: const [
+        children: [
           _DeviceRow(
             icon: 'sun',
             tone: 'amber',
             name: 'Node1',
             detail: 'Iklim rumah kaca',
+            active: node1Active,
+            liveConnected: liveConnected,
           ),
           _DeviceRow(
             icon: 'drop',
             tone: 'blue',
             name: 'Node2',
             detail: 'Tanah & air',
+            active: node2Active,
+            liveConnected: liveConnected,
           ),
         ],
       ),
@@ -605,12 +632,16 @@ class _DeviceRow extends StatelessWidget {
     required this.tone,
     required this.name,
     required this.detail,
+    this.active = false,
+    this.liveConnected = false,
   });
 
   final String icon;
   final String tone;
   final String name;
   final String detail;
+  final bool active;
+  final bool liveConnected;
 
   @override
   Widget build(BuildContext context) {
@@ -618,6 +649,11 @@ class _DeviceRow extends StatelessWidget {
     // Pada text scale besar, badge turun ke baris sendiri agar tidak overflow.
     final scale = MediaQuery.textScalerOf(context).scale(13) / 13;
     final stacked = scale > 1.4;
+    final badge = GrowviaBadge(
+      active ? (liveConnected ? 'Live' : 'Tersedia') : 'Belum aktif',
+      tone: active ? 'green' : 'neutral',
+      dot: active,
+    );
     final head = Row(
       children: [
         GrowviaIconTile(icon: icon, tone: tone),
@@ -640,7 +676,7 @@ class _DeviceRow extends StatelessWidget {
         ),
         if (!stacked) ...[
           const SizedBox(width: 8),
-          const GrowviaBadge('Belum aktif'),
+          badge,
         ],
       ],
     );
@@ -652,7 +688,7 @@ class _DeviceRow extends StatelessWidget {
               children: [
                 head,
                 const SizedBox(height: 8),
-                const GrowviaBadge('Belum aktif'),
+                badge,
               ],
             )
           : head,
@@ -868,16 +904,16 @@ class GrowviaLinkTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: t.surface,
         border: Border.all(color: t.line),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              GrowviaIconTile(icon: icon),
+              GrowviaIconTile(icon: icon, size: 38),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -892,10 +928,10 @@ class GrowviaLinkTile extends StatelessWidget {
                         color: t.ink,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: TextStyle(fontSize: 12, color: t.secondary),
+                      style: TextStyle(fontSize: 12.5, color: t.secondary),
                     ),
                   ],
                 ),
@@ -943,13 +979,13 @@ class GrowviaNodeOverview extends StatelessWidget {
       decoration: BoxDecoration(
         color: t.surface,
         border: Border.all(color: t.line),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

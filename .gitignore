@@ -49,7 +49,5 @@ app.*.map.json
 
 # Android release signing — never commit the keystore or its passwords.
 /android/key.properties
-/android/*.jks
-/android/*.keystore
-/android/**/*.jks
-/android/**/*.keystore
+*.jks
+*.keystore

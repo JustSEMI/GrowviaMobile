@@ -5,7 +5,9 @@ import 'growvia_components.dart';
 import 'growvia_icon.dart';
 
 class Brand extends StatelessWidget {
-  const Brand({super.key});
+  const Brand({this.compact = false, super.key});
+
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -13,24 +15,60 @@ class Brand extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Padanan `.brand-mark`: kotak hijau tua dengan ikon daun.
         Container(
-          padding: const EdgeInsets.all(8),
+          width: compact ? 32 : 36,
+          height: compact ? 32 : 36,
           decoration: BoxDecoration(
             color: t.brandSurface,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(compact ? 9 : 10),
           ),
-          child: GrowviaIcon('leaf', color: t.brandInk, size: 24),
+          child: Center(
+            child: GrowviaIcon(
+              'leaf',
+              color: t.brandInk,
+              size: compact ? 18 : 20,
+            ),
+          ),
         ),
-        const SizedBox(width: 11),
+        const SizedBox(width: 10),
         Flexible(
-          child: Text(
-            'growvia',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textScaler: TextScaler.noScaling,
-            style: Theme.of(context).textTheme.titleLarge
-                ?.copyWith(fontSize: 25, letterSpacing: -1.75),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(text: 'growvia'),
+                    TextSpan(text: '.', style: TextStyle(color: t.green)),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textScaler: TextScaler.noScaling,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: compact ? 20 : 22,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -1.1,
+                  height: 1.0,
+                ),
+              ),
+              if (!compact) ...[
+                const SizedBox(height: 3),
+                Text(
+                  'RUANG KERJA KEBUN',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textScaler: TextScaler.noScaling,
+                  style: TextStyle(
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2,
+                    color: t.muted,
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ],
@@ -129,34 +167,52 @@ class PageIntro extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: t.paleGreen,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            eyebrow.toUpperCase(),
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.3,
-              color: t.green,
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 14,
+              height: 2,
+              decoration: BoxDecoration(
+                color: t.green,
+                borderRadius: BorderRadius.circular(999),
+              ),
             ),
-          ),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                eyebrow.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.15,
+                  color: t.green,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 8),
         Text(
           title,
-          style: Theme.of(context).textTheme.headlineMedium
-              ?.copyWith(fontSize: 36, height: 1.06, letterSpacing: -0.9),
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontSize: 23,
+            fontWeight: FontWeight.w700,
+            height: 1.18,
+            letterSpacing: -0.6,
+            color: t.ink,
+          ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 620),
           child: Text(
             description,
-            style: TextStyle(color: t.secondary, height: 1.55),
+            style: TextStyle(
+              fontSize: 13.5,
+              color: t.secondary,
+              height: 1.48,
+            ),
           ),
         ),
       ],
@@ -183,7 +239,7 @@ class PageBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
     physics: const AlwaysScrollableScrollPhysics(),
-    padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+    padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
     child: Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(

@@ -96,30 +96,78 @@ class _LoginPageState extends State<LoginPage> {
           final wide = constraints.maxWidth >= 900;
           final form = _formPanel(context, preferences, configured);
           if (!wide) {
-            return SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(24, 20, 24, 0),
-                    child: Brand(),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 440),
-                          child: form,
+            return ColoredBox(
+              color: t.canvas,
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 440),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: t.storySurface,
+                                    border: Border.all(color: t.line),
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Brand(),
+                                          ],
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 84,
+                                        height: 56,
+                                        child: const GrowviaGardenArt(
+                                          height: 56,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: t.surface,
+                                    border: Border.all(color: t.line),
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: t.scrim.withValues(alpha: 0.04),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  ),
+                                  child: form,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                    child: _footer(context),
-                  ),
-                ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+                      child: _footer(context),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -345,7 +393,7 @@ class _LoginPageState extends State<LoginPage> {
                       ? 'Sembunyikan kata sandi'
                       : 'Tampilkan kata sandi',
                   onPressed: () => setState(() => _visible = !_visible),
-                  icon: GrowviaIcon(_visible ? 'eye' : 'close'),
+                  icon: GrowviaIcon(_visible ? 'eye' : 'eye-off'),
                 ),
               ),
               obscureText: !_visible,
@@ -407,6 +455,7 @@ class _LoginPageState extends State<LoginPage> {
                             top: false,
                             child: SettingsPage(
                               preferences: widget.controller.preferences,
+                              updater: widget.controller.updater,
                             ),
                           ),
                         ),

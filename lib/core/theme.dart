@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../ui/growvia_icon.dart';
 import 'tokens.dart';
 
 /// Tema Growvia, disusun dari [GrowviaTokens] yang mencerminkan `app.css`.
@@ -68,56 +69,79 @@ abstract final class GrowviaTheme {
       ),
       textTheme: base.textTheme.copyWith(
         displaySmall: base.textTheme.displaySmall?.copyWith(
-          fontFamily: 'Horizon',
-          height: 1.12,
-          fontSize: 42,
+          fontFamily: 'Montserrat',
+          fontWeight: FontWeight.w700,
+          height: 1.08,
+          fontSize: 28,
+          letterSpacing: -0.7,
+          fontFeatures: const [FontFeature.tabularFigures()],
         ),
         headlineMedium: base.textTheme.headlineMedium?.copyWith(
-          fontFamily: 'Horizon',
-          height: 1.12,
-          fontSize: 34,
+          fontFamily: 'Montserrat',
+          fontWeight: FontWeight.w700,
+          height: 1.18,
+          fontSize: 24,
+          letterSpacing: -0.6,
+          fontFeatures: const [FontFeature.tabularFigures()],
         ),
         titleLarge: base.textTheme.titleLarge?.copyWith(
-          fontSize: 21,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
+        titleMedium: base.textTheme.titleMedium?.copyWith(
+          fontSize: 15,
           fontWeight: FontWeight.w600,
+          letterSpacing: -0.2,
+        ),
+        titleSmall: base.textTheme.titleSmall?.copyWith(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: -0.1,
         ),
         bodyLarge: base.textTheme.bodyLarge?.copyWith(
-          fontSize: 16,
-          height: 1.5,
+          fontSize: 15,
+          height: 1.55,
         ),
         bodyMedium: base.textTheme.bodyMedium?.copyWith(
-          fontSize: 14,
+          fontSize: 13.5,
           height: 1.5,
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: t.canvas,
+        backgroundColor: t.surface,
         foregroundColor: t.ink,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleSpacing: 20,
+        toolbarHeight: 60,
+        titleSpacing: 16,
+      ),
+      actionIconTheme: ActionIconThemeData(
+        backButtonIconBuilder: (_) => GrowviaIcon('arrow-left', color: t.ink),
+        drawerButtonIconBuilder: (_) => GrowviaIcon('menu', color: t.ink),
+        closeButtonIconBuilder: (_) => GrowviaIcon('close', color: t.ink),
       ),
       cardTheme: CardThemeData(
         color: t.surface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           side: BorderSide(color: t.line),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: t.fieldSurface,
+        fillColor: t.soft,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 18,
+          vertical: 16,
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: t.controlBorder),
+          borderSide: BorderSide(color: t.line),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -129,14 +153,14 @@ abstract final class GrowviaTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size(48, 52),
+          minimumSize: const Size(48, 50),
           backgroundColor: t.action,
           foregroundColor: t.onAction,
           disabledBackgroundColor: t.disabled,
           disabledForegroundColor: t.secondary,
           textStyle: const TextStyle(
             fontFamily: 'Montserrat',
-            fontSize: 15,
+            fontSize: 14.5,
             fontWeight: FontWeight.w600,
           ),
           shape: RoundedRectangleBorder(
@@ -146,10 +170,15 @@ abstract final class GrowviaTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          minimumSize: const Size(48, 52),
+          minimumSize: const Size(48, 48),
           foregroundColor: t.ink,
           backgroundColor: t.surface,
           side: BorderSide(color: t.controlLine),
+          textStyle: const TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -159,18 +188,34 @@ abstract final class GrowviaTheme {
         style: TextButton.styleFrom(
           minimumSize: const Size(48, 48),
           foregroundColor: t.green,
+          textStyle: const TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       iconTheme: IconThemeData(color: t.secondary, size: 20),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: t.surface,
         indicatorColor: t.paleGreen,
-        indicatorShape: const StadiumBorder(),
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
         elevation: 0,
-        height: 78,
+        height: 74,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        labelTextStyle: WidgetStatePropertyAll(
-          TextStyle(fontFamily: 'Montserrat', fontSize: 12, color: t.ink),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            fontFamily: 'Montserrat',
+            fontSize: 11.5,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w600
+                : FontWeight.w500,
+            color: states.contains(WidgetState.selected)
+                ? t.navActive
+                : t.secondary,
+          ),
         ),
       ),
       dividerTheme: DividerThemeData(color: t.line, space: 1),

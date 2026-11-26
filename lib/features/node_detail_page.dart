@@ -236,6 +236,9 @@ class _NodeDetailPageState extends State<NodeDetailPage> {
                 key: Key('node-chart-$primary'),
                 title: '$primaryLabel · $rangeLabel',
                 readings: byMetric[primary] ?? const [],
+                accentColor: climate
+                    ? GrowviaTokens.of(context).amber
+                    : GrowviaTokens.of(context).green,
               ),
               for (final entry in byMetric.entries)
                 if (entry.key != primary &&
@@ -244,6 +247,14 @@ class _NodeDetailPageState extends State<NodeDetailPage> {
                   ReadingChart(
                     title: '${entry.value.first.label} · $rangeLabel',
                     readings: entry.value,
+                    accentColor:
+                        entry.key == 'humidity' ||
+                            entry.key == 'humidity2' ||
+                            entry.key == 'water_level'
+                        ? GrowviaTokens.of(context).blue
+                        : entry.key == 'temperature2'
+                        ? GrowviaTokens.of(context).amber
+                        : GrowviaTokens.of(context).green,
                   ),
                 ],
               const SizedBox(height: 24),
@@ -420,11 +431,19 @@ class _RangePills extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = GrowviaTokens.of(context);
-    return Wrap(
-      spacing: 8,
-      children: [
-        for (final (hours, label) in _options) _pill(t, hours, label),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: t.soft,
+        border: Border.all(color: t.line),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (hours, label) in _options) _pill(t, hours, label),
+        ],
+      ),
     );
   }
 
@@ -434,20 +453,21 @@ class _RangePills extends StatelessWidget {
       button: true,
       selected: selected,
       child: InkWell(
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(9),
         onTap: () => onChanged(hours),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          constraints: const BoxConstraints(minHeight: 38),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? t.paleGreen : Colors.transparent,
-            borderRadius: BorderRadius.circular(5),
-            border: Border.all(color: selected ? t.green : t.line),
+            color: selected ? t.surface : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+            border: selected ? Border.all(color: t.controlLine) : null,
           ),
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+              fontSize: 12.5,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               color: selected ? t.green : t.secondary,
             ),
           ),

@@ -74,64 +74,123 @@ class MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = Theme.of(context).colorScheme;
     final tokens = GrowviaTokens.of(context);
     final valid =
         reading != null && reading!.value.isFinite && reading!.unit == unit;
     final colors = tokens.tone(tone);
+    final double? fraction = !valid
+        ? null
+        : unit == '%'
+        ? (reading!.value / 100).clamp(0.0, 1.0)
+        : unit == '°C'
+        ? (reading!.value / 50).clamp(0.0, 1.0)
+        : null;
+    final primaryText = valid
+        ? (valueText ?? reading!.value.toStringAsFixed(1))
+        : '—';
+    final stamp = valid
+        ? '${reading!.recordedAt.toUtc().hour.toString().padLeft(2, '0')}:'
+              '${reading!.recordedAt.toUtc().minute.toString().padLeft(2, '0')} UTC'
+        : null;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.background, tokens.surface],
-        ),
+        color: tokens.surface,
         border: Border.all(color: tokens.line),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: tokens.scrim.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.textScalerOf(context).scale(44),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GrowviaIconTile(icon: icon, tone: tone, size: 30),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: Theme.of(context).textTheme.titleSmall,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GrowviaIconTile(icon: icon, tone: tone, size: 32),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontSize: 12.5,
+                    height: 1.25,
+                    color: tokens.secondary,
                   ),
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: primaryText,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                    letterSpacing: -0.6,
+                    color: valid ? tokens.ink : colors.foreground,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                if (unit.isNotEmpty)
+                  TextSpan(
+                    text: ' $unit',
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: tokens.secondary,
+                    ),
+                  ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            '${valid ? (valueText ?? reading!.value.toStringAsFixed(1)) : '—'}${unit.isEmpty ? '' : ' $unit'}',
-            style: Theme.of(context).textTheme.headlineMedium
-                ?.copyWith(color: valid ? tokens.ink : colors.foreground),
-          ),
-          const SizedBox(height: 4),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: MediaQuery.textScalerOf(context).scale(32),
+          if (fraction != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: SizedBox(
+                height: 5,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ColoredBox(color: tokens.chartGrid),
+                    FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: fraction,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: colors.foreground,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: Text(
-              valid ? 'Data tersimpan · bukan realtime' : note,
-              style: TextStyle(fontSize: 12, color: c.onSurfaceVariant),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            valid ? 'Terakhir $stamp' : note,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11.5,
+              height: 1.35,
+              color: tokens.muted,
             ),
           ),
         ],

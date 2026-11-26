@@ -2,14 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/app_controller.dart';
+import '../core/tokens.dart';
 import '../ui/components.dart';
+import '../ui/growvia_components.dart';
 import '../ui/growvia_icon.dart';
 import '../ui/management_components.dart';
 import 'sessions_page.dart';
 
 class AccountPage extends StatefulWidget {
-  const AccountPage({required this.controller, super.key});
+  const AccountPage({
+    required this.controller,
+    this.focusPassword = false,
+    super.key,
+  });
   final AppController controller;
+  final bool focusPassword;
   @override
   State<AccountPage> createState() => _AccountPageState();
 }
@@ -17,6 +24,7 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends ProtectedManagementState<AccountPage> {
   @override
   AppController get controller => widget.controller;
+  final _passwordSectionKey = GlobalKey();
   final name = TextEditingController(),
       email = TextEditingController(),
       verification = TextEditingController(),
@@ -35,6 +43,18 @@ class _AccountPageState extends ProtectedManagementState<AccountPage> {
       name.text = controller.session!.name;
       email.text = controller.session!.email;
     });
+    if (widget.focusPassword) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _passwordSectionKey.currentContext;
+        if (mounted && ctx != null) {
+          Scrollable.ensureVisible(
+            ctx,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
+    }
   }
 
   @override
@@ -128,6 +148,61 @@ class _AccountPageState extends ProtectedManagementState<AccountPage> {
     }
   }
 
+  Widget _sectionHeader(
+    BuildContext context, {
+    required String eyebrow,
+    required String title,
+    required String subtitle,
+    required String icon,
+    required String tone,
+  }) {
+    final t = GrowviaTokens.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GrowviaIconTile(icon: icon, tone: tone, size: 36),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      eyebrow.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.7,
+                        color: t.muted,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(title, style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: t.secondary,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(height: 1, color: t.line),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => protectedPage(
     'Akun saya',
@@ -135,7 +210,8 @@ class _AccountPageState extends ProtectedManagementState<AccountPage> {
       const PageIntro(
         eyebrow: 'Keamanan akun',
         title: 'Profil & kata sandi',
-        description: 'Perubahan email dan kata sandi memerlukan verifikasi kata sandi saat ini. Sesi lain akan dicabut.',
+        description:
+            'Perubahan email dan kata sandi memerlukan verifikasi kata sandi saat ini. Sesi lain akan dicabut.',
       ),
       ...feedback,
       Panel(
@@ -143,7 +219,14 @@ class _AccountPageState extends ProtectedManagementState<AccountPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              managementHeading(context, 'Profil'),
+              _sectionHeader(
+                context,
+                eyebrow: '01 · Identitas',
+                title: 'Profil',
+                subtitle: 'Nama dan email yang terpasang pada akun ini.',
+                icon: 'users',
+                tone: 'green',
+              ),
               ManagementField(
                 id: 'account-name',
                 label: 'Nama',
@@ -183,11 +266,20 @@ class _AccountPageState extends ProtectedManagementState<AccountPage> {
         ),
       ),
       Panel(
+        key: _passwordSectionKey,
         child: AutofillGroup(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              managementHeading(context, 'Ganti kata sandi'),
+              _sectionHeader(
+                context,
+                eyebrow: '02 · Keamanan akun',
+                title: 'Ganti kata sandi',
+                subtitle:
+                    'Gunakan kata sandi unik yang tidak dipakai di layanan lain.',
+                icon: 'shield',
+                tone: 'blue',
+              ),
               ManagementField(
                 id: 'account-current-password',
                 label: 'Kata sandi saat ini',

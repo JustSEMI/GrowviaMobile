@@ -77,7 +77,7 @@ abstract final class _IconPathCache {
         'Ikon tidak dikenal. Tersedia: ${growviaIconPaths.keys.join(', ')}',
       );
     }
-    return parseSvgPath(source);
+    return parseSvgPath(source)..fillType = PathFillType.evenOdd;
   });
 
   /// Dipakai test untuk memastikan setiap ikon bisa diparse.

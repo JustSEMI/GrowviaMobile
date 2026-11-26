@@ -10,15 +10,28 @@ import 'features/workspace_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MainApp(liveServiceFactory: defaultMqttLiveFactory));
+  runApp(
+    const MainApp(
+      liveServiceFactory: defaultMqttLiveFactory,
+      autoCheckUpdates: true,
+    ),
+  );
 }
 
 class MainApp extends StatefulWidget {
-  const MainApp({this.client, this.liveServiceFactory, super.key});
+  const MainApp({
+    this.client,
+    this.liveServiceFactory,
+    this.autoCheckUpdates = false,
+    super.key,
+  });
   final http.Client? client;
 
   /// Pabrik MQTT live; null mematikan langganan langsung (dipakai di test).
   final MqttLiveServiceFactory? liveServiceFactory;
+
+  /// Cek rilis GitHub otomatis di latar belakang (aktif di produksi, mati di test).
+  final bool autoCheckUpdates;
   @override
   State<MainApp> createState() => _MainAppState();
 }
@@ -32,6 +45,7 @@ class _MainAppState extends State<MainApp> {
     _controller = AppController(
       client: widget.client,
       liveServiceFactory: widget.liveServiceFactory,
+      autoCheckUpdates: widget.autoCheckUpdates,
     );
     _controller.addListener(_updated);
     _controller.preferences.addListener(_updated);

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../data/api_client.dart';
+import '../data/app_updater.dart';
 import '../data/mqtt_service.dart';
 import '../data/reading.dart';
 import '../data/workspace_models.dart';
@@ -22,13 +24,21 @@ class AppController extends ChangeNotifier {
     http.Client? client,
     FlutterSecureStorage? storage,
     this.liveServiceFactory,
+    AppUpdateController? updater,
+    this.autoCheckUpdates = false,
   }) : client = client ?? http.Client(),
        _ownsClient = client == null,
-       storage = storage ?? const FlutterSecureStorage();
+       storage = storage ?? const FlutterSecureStorage(),
+       _ownsUpdater = updater == null {
+    this.updater = updater ?? AppUpdateController(client: this.client);
+  }
 
   final AppPreferences preferences = AppPreferences();
   final http.Client client;
   final bool _ownsClient;
+  final bool _ownsUpdater;
+  final bool autoCheckUpdates;
+  late final AppUpdateController updater;
   final FlutterSecureStorage storage;
   AccountSession? session;
   GrowviaApi? _api;
@@ -147,6 +157,10 @@ class AppController extends ChangeNotifier {
 
   Future<void> initialize() async {
     final generation = _generation;
+    unawaited(updater.loadInstalledVersion());
+    if (autoCheckUpdates) {
+      unawaited(updater.checkForUpdate(silent: true));
+    }
     try {
       await preferences.load();
       if (_disposed ||
@@ -734,6 +748,7 @@ class AppController extends ChangeNotifier {
     _disposed = true;
     _generation++;
     _clearPrivate();
+    if (_ownsUpdater) updater.dispose();
     preferences.dispose();
     if (_ownsClient) client.close();
     super.dispose();

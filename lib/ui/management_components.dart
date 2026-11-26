@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/app_controller.dart';
+import '../core/tokens.dart';
 import '../data/api_client.dart';
 import '../ui/components.dart';
 import '../ui/growvia_icon.dart';
@@ -293,11 +294,7 @@ class _ManagementFieldState extends State<ManagementField> {
                 onPressed: () => setState(() {
                   visible = !visible;
                 }),
-                icon: Icon(
-                  visible
-                      ? Icons.visibility_rounded
-                      : Icons.visibility_off_rounded,
-                ),
+                icon: GrowviaIcon(visible ? 'eye' : 'eye-off', size: 20),
               )
             : null,
       ),
@@ -320,70 +317,123 @@ class ManagementSelector extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final bool enabled;
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: OutlinedButton(
-      key: Key(id),
-      onPressed: !enabled
-          ? null
-          : () async {
-              final selected = await showModalBottomSheet<String>(
-                context: context,
-                useSafeArea: true,
-                isScrollControlled: true,
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                builder: (context) => FractionallySizedBox(
-                  heightFactor: .85,
-                  child: SafeArea(
-                    child: ListView(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Text(
-                            label,
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                        ),
-                        ...options.entries.map(
-                          (entry) => ListTile(
-                            key: Key('$id-option-${entry.key}'),
-                            minVerticalPadding: 16,
-                            leading: GrowviaIcon(
-                              entry.key == value ? 'check' : 'grid',
-                            ),
-                            title: Text(entry.value),
-                            onTap: () => Navigator.pop(context, entry.key),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('Batal'),
-                        ),
-                      ],
+  Widget build(BuildContext context) {
+    final t = GrowviaTokens.of(context);
+    final currentLabel = options[value] ?? value;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: OutlinedButton(
+        key: Key(id),
+        style: OutlinedButton.styleFrom(
+          backgroundColor: t.soft.withValues(alpha: 0.65),
+          foregroundColor: t.ink,
+          side: BorderSide(color: t.line),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
+        onPressed: !enabled
+            ? null
+            : () async {
+                final selected = await showModalBottomSheet<String>(
+                  context: context,
+                  useSafeArea: true,
+                  isScrollControlled: true,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(18),
                     ),
                   ),
-                ),
-              );
-              if (context.mounted && selected != null) onChanged(selected);
-            },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+                  builder: (context) => FractionallySizedBox(
+                    heightFactor: .85,
+                    child: SafeArea(
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
+                        children: [
+                          Center(
+                            child: Container(
+                              width: 36,
+                              height: 4,
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: t.line,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                            child: Text(
+                              label,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                          ),
+                          ...options.entries.map((entry) {
+                            final active = entry.key == value;
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Material(
+                                color: active ? t.paleGreen : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                child: ListTile(
+                                  key: Key('$id-option-${entry.key}'),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  minVerticalPadding: 14,
+                                  leading: GrowviaIcon(
+                                    active ? 'check' : 'grid',
+                                    color: active ? t.green : t.muted,
+                                  ),
+                                  title: Text(
+                                    entry.value,
+                                    style: TextStyle(
+                                      fontWeight: active
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                      color: active ? t.green : t.ink,
+                                    ),
+                                  ),
+                                  onTap: () =>
+                                      Navigator.pop(context, entry.key),
+                                ),
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Batal'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+                if (context.mounted && selected != null) onChanged(selected);
+              },
         child: Row(
           children: [
             Expanded(
-              child: Text('$label: ${options[value] ?? value}', softWrap: true),
+              child: Text(
+                '$label: $currentLabel',
+                softWrap: true,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: t.ink,
+                ),
+              ),
             ),
             const SizedBox(width: 8),
-            const GrowviaIcon('chevron-down'),
+            GrowviaIcon('chevron-down', size: 18, color: t.secondary),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 Future<bool> confirmManagement(

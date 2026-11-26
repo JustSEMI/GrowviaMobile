@@ -579,11 +579,12 @@ void main() {
       );
       await h.start();
       await mount(tester, SystemSettingsPage(controller: h.app));
+      expect(find.byKey(const Key('settings-section')), findsNothing);
       await enter(tester, 'setting-update_interval', '2');
-      await tap(tester, 'settings-save');
+      await tap(tester, 'settings-save-general');
       expect(h.requests.where((r) => r.method == 'PATCH'), isEmpty);
       await enter(tester, 'setting-update_interval', '20');
-      await tap(tester, 'settings-save');
+      await tap(tester, 'settings-save-general');
       final body = jsonDecode(
         h.requests.singleWhere((r) => r.method == 'PATCH').body,
       );
@@ -592,21 +593,19 @@ void main() {
         'values': {'update_interval': 20},
       });
       expect(stored['update_interval'], '20');
-      await choose(tester, 'settings-section', 'notifications');
-      await choose(tester, 'setting-notif_pompa', '0');
-      await tap(tester, 'settings-save');
+      await tap(tester, 'setting-notif_pompa');
+      await tap(tester, 'settings-save-notifications');
       expect(
         jsonDecode(
           h.requests.where((r) => r.method == 'PATCH').last.body,
         )['values']['notif_pompa'],
         false,
       );
-      await choose(tester, 'settings-section', 'climate');
       await enter(tester, 'setting-th_suhu_min', '35');
-      await tap(tester, 'settings-save');
+      await tap(tester, 'settings-save-climate');
       expect(h.requests.where((r) => r.method == 'PATCH').length, 2);
       await enter(tester, 'setting-th_suhu_min', '24');
-      await tap(tester, 'settings-save');
+      await tap(tester, 'settings-save-climate');
       expect(stored['th_suhu_min'], '24');
       expect(
         jsonDecode(
@@ -614,13 +613,12 @@ void main() {
         )['section'],
         'climate',
       );
-      await choose(tester, 'settings-section', 'soil');
       await enter(tester, 'setting-soil_on', '65');
-      await tap(tester, 'settings-save');
+      await tap(tester, 'settings-save-soil');
       expect(h.requests.where((r) => r.method == 'PATCH').length, 3);
       await enter(tester, 'setting-soil_on', '25');
-      await choose(tester, 'setting-pump_mode', 'manual');
-      await tap(tester, 'settings-save');
+      await tap(tester, 'setting-pump_mode-option-manual');
+      await tap(tester, 'settings-save-soil');
       expect(stored['pump_mode'], 'manual');
       expect(
         jsonDecode(
@@ -800,7 +798,7 @@ void main() {
       expect(h.app.session!.token, 'test-token');
       await mount(tester, SystemSettingsPage(controller: h.app));
       await enter(tester, 'setting-update_interval', '25');
-      await tap(tester, 'settings-save');
+      await tap(tester, 'settings-save-general');
       expect(find.byKey(const Key('management-errors')), findsOneWidget);
       expect(find.byKey(const Key('management-receipt')), findsNothing);
       await h.app.logout();

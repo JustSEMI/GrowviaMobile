@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/app_controller.dart';
+import '../core/tokens.dart';
 import '../data/workspace_models.dart';
 import '../ui/components.dart';
+import '../ui/growvia_components.dart';
 import '../ui/growvia_icon.dart';
 import '../ui/management_components.dart';
 
@@ -93,34 +95,84 @@ class _SessionsPageState extends ProtectedManagementState<SessionsPage> {
     }
   }
 
-  Widget deviceCard(DeviceSession device) => Panel(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: GrowviaIcon(
-            device.kind == 'web' ? 'connection' : 'display',
+  Widget deviceCard(DeviceSession device) {
+    final t = GrowviaTokens.of(context);
+    final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+    return Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final stackBadge = device.current &&
+                  (scale > 1.35 || constraints.maxWidth < 290);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      GrowviaIconTile(
+                        icon: device.kind == 'web' ? 'connection' : 'display',
+                        tone: device.current ? 'green' : 'neutral',
+                        size: 36,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          device.label,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      if (device.current && !stackBadge) ...[
+                        const SizedBox(width: 8),
+                        const GrowviaBadge(
+                          'Perangkat ini',
+                          tone: 'green',
+                          dot: true,
+                        ),
+                      ],
+                    ],
+                  ),
+                  if (stackBadge) ...[
+                    const SizedBox(height: 10),
+                    const GrowviaBadge(
+                      'Perangkat ini',
+                      tone: 'green',
+                      dot: true,
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(device.label, style: Theme.of(context).textTheme.titleMedium),
-        if (device.current)
+          const SizedBox(height: 12),
+          Divider(height: 1, color: t.line),
+          const SizedBox(height: 10),
           Text(
-            'Perangkat ini',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
+            device.device,
+            style: TextStyle(fontWeight: FontWeight.w500, color: t.ink),
           ),
-        Text(device.device),
-        Text('Jenis: ${device.kind == 'web' ? 'Web' : 'Mobile'}'),
-        Text('IP: ${device.ip ?? 'Tidak tersedia'}'),
-        Text('Aktif terakhir: ${utcLabel(device.lastActive)}'),
-        Text('Kedaluwarsa: ${utcLabel(device.expiresAt)}'),
-      ],
-    ),
-  );
+          const SizedBox(height: 4),
+          Text(
+            'Jenis: ${device.kind == 'web' ? 'Web' : 'Mobile'}',
+            style: TextStyle(fontSize: 13, color: t.secondary),
+          ),
+          Text(
+            'IP: ${device.ip ?? 'Tidak tersedia'}',
+            style: TextStyle(fontSize: 13, color: t.secondary),
+          ),
+          Text(
+            'Aktif terakhir: ${utcLabel(device.lastActive)}',
+            style: TextStyle(fontSize: 13, color: t.secondary),
+          ),
+          Text(
+            'Kedaluwarsa: ${utcLabel(device.expiresAt)}',
+            style: TextStyle(fontSize: 13, color: t.secondary),
+          ),
+        ],
+      ),
+    );
+  }
   @override
   Widget build(BuildContext context) => protectedPage(
     'Perangkat & sesi',

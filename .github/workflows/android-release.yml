@@ -1,0 +1,181 @@
+name: Android Build & Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag rilis (contoh: v0.1.1). Kosongkan untuk memakai versi di pubspec.yaml.'
+        required: false
+        default: ''
+      release_notes:
+        description: 'Catatan pembaruan yang tampil di aplikasi HP (opsional)'
+        required: false
+        default: ''
+      publish_release:
+        description: 'Publikasikan ke GitHub Releases agar HP bisa update langsung'
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-android:
+    name: Test & Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run static analysis
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        run: flutter test
+
+      - name: Resolve version & release mode
+        id: meta
+        shell: bash
+        run: |
+          PUBSPEC_VER=$(grep -E '^version:' pubspec.yaml | head -n1 | awk '{print $2}' | tr -d '\r')
+          PUBSPEC_NAME="${PUBSPEC_VER%%+*}"
+          PUBSPEC_BUILD="${PUBSPEC_VER##*+}"
+          if [ "$PUBSPEC_BUILD" = "$PUBSPEC_VER" ] || ! [[ "$PUBSPEC_BUILD" =~ ^[0-9]+$ ]]; then
+            PUBSPEC_BUILD=1
+          fi
+
+          SHOULD_RELEASE="false"
+          RELEASE_TAG="v${PUBSPEC_NAME}"
+
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            SHOULD_RELEASE="true"
+            RELEASE_TAG="${GITHUB_REF_NAME}"
+          elif [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            if [ -n "${{ inputs.tag }}" ]; then
+              RELEASE_TAG="${{ inputs.tag }}"
+              if [[ "$RELEASE_TAG" != v* ]]; then
+                RELEASE_TAG="v${RELEASE_TAG}"
+              fi
+            fi
+            if [ "${{ inputs.publish_release }}" = "true" ]; then
+              SHOULD_RELEASE="true"
+            fi
+          fi
+
+          BUILD_NAME="${RELEASE_TAG#v}"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+          if [ "$PUBSPEC_BUILD" -gt "$BUILD_NUMBER" ]; then
+            BUILD_NUMBER="$PUBSPEC_BUILD"
+          fi
+
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "build_name=${BUILD_NAME}" >> "$GITHUB_OUTPUT"
+          echo "build_number=${BUILD_NUMBER}" >> "$GITHUB_OUTPUT"
+          echo "should_release=${SHOULD_RELEASE}" >> "$GITHUB_OUTPUT"
+          echo "Resolved release_tag=${RELEASE_TAG} build_name=${BUILD_NAME} build_number=${BUILD_NUMBER} should_release=${SHOULD_RELEASE}"
+
+      - name: Configure Android release keystore (if secrets are set)
+        id: signing
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | tr -d '\r\n ' | base64 --decode > android/growvia-release.jks
+            printf '%s\n' \
+              "storePassword=${ANDROID_KEYSTORE_PASSWORD}" \
+              "keyPassword=${ANDROID_KEY_PASSWORD}" \
+              "keyAlias=${ANDROID_KEY_ALIAS}" \
+              "storeFile=growvia-release.jks" \
+              > android/key.properties
+            echo "signed=true" >> "$GITHUB_OUTPUT"
+            echo "Release keystore configured."
+          else
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Secret keystore rilis belum diatur (ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD). APK akan ditandatangani debug key sementara — Android butuh keystore yang sama agar bisa update langsung tanpa uninstall."
+          fi
+
+      - name: Build release APK
+        run: |
+          flutter build apk --release \
+            --build-name="${{ steps.meta.outputs.build_name }}" \
+            --build-number="${{ steps.meta.outputs.build_number }}" \
+            --dart-define="GROWVIA_GITHUB_REPO=${{ github.repository }}"
+
+      - name: Package release assets
+        shell: bash
+        run: |
+          mkdir -p dist
+          APK_NAME="growvia-mobile-${{ steps.meta.outputs.release_tag }}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/${APK_NAME}"
+          (cd dist && sha256sum "${APK_NAME}" > "${APK_NAME}.sha256")
+          ls -lh dist/
+
+      - name: Upload APK build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: growvia-mobile-${{ steps.meta.outputs.release_tag }}
+          path: dist/*
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        if: steps.meta.outputs.should_release == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CUSTOM_NOTES: ${{ inputs.release_notes }}
+        run: |
+          TAG="${{ steps.meta.outputs.release_tag }}"
+          APK_FILE="dist/growvia-mobile-${TAG}.apk"
+          SHA_FILE="dist/growvia-mobile-${TAG}.apk.sha256"
+          SHA_VALUE="$(awk '{print $1}' "$SHA_FILE")"
+
+          if [ -n "$CUSTOM_NOTES" ]; then
+            BODY="$CUSTOM_NOTES"
+          else
+            BODY="Rilis Growvia Mobile ${TAG} (build ${{ steps.meta.outputs.build_number }})."
+          fi
+
+          if [ "${{ steps.signing.outputs.signed }}" != "true" ]; then
+            BODY="${BODY}"$'\n\n'"⚠️ Catatan: Build ini belum memakai keystore rilis tetap (GitHub Secrets belum diisi). Pasang keystore tetap agar update berikutnya bisa menimpa langsung tanpa uninstall."
+          fi
+          BODY="${BODY}"$'\n\n'"SHA-256: \`${SHA_VALUE}\`"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK_FILE" "$SHA_FILE" --clobber
+            gh release edit "$TAG" --title "Growvia Mobile ${TAG}" --notes "$BODY"
+          else
+            gh release create "$TAG" "$APK_FILE" "$SHA_FILE" \
+              --target "${GITHUB_SHA}" \
+              --title "Growvia Mobile ${TAG}" \
+              --notes "$BODY"
+          fi

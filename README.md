@@ -137,6 +137,43 @@ Pasang APK ke HP:
 "D:/Android SDK/platform-tools/adb.exe" install -r "build/app/outputs/flutter-apk/app-debug.apk"
 ```
 
+## 5. Build di GitHub & Auto-Update Langsung dari HP
+
+Workflow [`.github/workflows/android-release.yml`](.github/workflows/android-release.yml) otomatis menjalankan `flutter analyze`, `flutter test`, dan membangun APK Android di GitHub Actions.
+
+### Menyiapkan Keystore Rilis Tetap (Sekali Saja)
+
+Agar HP Android bisa memperbarui aplikasi langsung **tanpa uninstall** (data login tetap aman), setiap rilis wajib ditandatangani keystore yang sama:
+
+```powershell
+& "D:\Android Studio\jbr\bin\keytool.exe" -genkeypair -v `
+  -keystore android/growvia-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias growvia
+
+[Convert]::ToBase64String([IO.File]::ReadAllBytes((Resolve-Path "android/growvia-release.jks").Path)) | Set-Clipboard
+```
+
+Tambahkan 4 secret berikut di repo GitHub (**Settings -> Secrets and variables -> Actions -> New repository secret**):
+
+| Secret | Isi |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | Hasil base64 dari clipboard di atas |
+| `ANDROID_KEYSTORE_PASSWORD` | Password keystore saat generate |
+| `ANDROID_KEY_ALIAS` | `growvia` |
+| `ANDROID_KEY_PASSWORD` | Password key alias |
+
+*(Simpan file `growvia-release.jks` di tempat aman di luar Git; jangan pernah di-commit.)*
+
+### Cara Merilis Update Baru
+
+- **Otomatis lewat Git Tag**:
+  ```sh
+  git tag v0.1.1
+  git push origin v0.1.1
+  ```
+- **Manual dari browser GitHub**: buka tab **Actions -> Android Build & Release -> Run workflow**, isi `tag` (mis. `v0.1.1`) dan catatan rilis opsional, lalu jalankan.
+
+Setelah GitHub Release terbit, aplikasi di HP akan otomatis mendeteksi versi baru (menampilkan banner di atas layar utama atau lewat **Pengaturan -> Cek pembaruan aplikasi**), mengunduh APK secara langsung, lalu membuka pemasang Android.
+
 ## Catatan
 
 - ID aplikasi sudah final dan seragam di kedua platform: **`com.growvia.mobile`** — jangan diubah setelah rilis store.
