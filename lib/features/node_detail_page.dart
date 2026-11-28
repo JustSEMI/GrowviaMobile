@@ -75,8 +75,7 @@ class _NodeDetailPageState extends State<NodeDetailPage> {
               ('humidity', 'Kelembapan udara', '%', 'drop'),
               ('temperature2', 'Suhu udara 2', '°C', 'thermometer'),
               ('humidity2', 'Kelembapan udara 2', '%', 'drop'),
-              ('fan1', 'Kipas 1', '', 'power'),
-              ('fan2', 'Kipas 2', '', 'power'),
+              ('fan1', 'Kipas', '', 'power'),
             ]
           : const <(String, String, String, String)>[
               ('soil_moisture', 'Kelembapan tanah', '%', 'leaf'),
@@ -101,7 +100,7 @@ class _NodeDetailPageState extends State<NodeDetailPage> {
         (byMetric[reading.metric] ??= []).add(reading);
       }
       // Metrik status (pompa/kipas) bernilai 0/1, tidak digambarkan trennya.
-      const stateMetrics = {'pump', 'fan1', 'fan2'};
+      const stateMetrics = {'pump', 'fan1'};
       final primary = climate ? 'temperature' : 'soil_moisture';
       final primaryLabel = metrics.firstWhere((m) => m.$1 == primary).$2;
       final summaryEntries = <String, String>{
@@ -156,9 +155,10 @@ class _NodeDetailPageState extends State<NodeDetailPage> {
                       valueText: _metricValueText(c, metric.$1, metric.$3),
                     ),
                   // Metrik tambahan yang dikirim node tapi belum ada di
-                  // daftar utama (sensor kedua, kipas, dll).
+                  // daftar utama (sensor kedua, kipas, dll). Abaikan `fan2` historis.
                   for (final entry in byMetric.entries)
-                    if (!metrics.any((m) => m.$1 == entry.key))
+                    if (!metrics.any((m) => m.$1 == entry.key) &&
+                        entry.key != 'fan2')
                       MetricCard(
                         label: entry.value.first.label,
                         unit: entry.value.first.unit,

@@ -28,8 +28,7 @@ void main() {
       'soil_temperature': 'Suhu tanah',
       'water_level': 'Isi tandon',
       'pump': 'Status pompa',
-      'fan1': 'Kipas 1',
-      'fan2': 'Kipas 2',
+      'fan1': 'Kipas',
     };
     for (final entry in expected.entries) {
       expect(
@@ -59,7 +58,6 @@ void main() {
       'water_level',
       'pump',
       'fan1',
-      'fan2',
     ]) {
       expect(reading(metric).label, isNot(metric));
     }

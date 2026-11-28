@@ -461,14 +461,14 @@ class _HistoryPageState extends State<HistoryPage> {
     'temperature' || 'temperature2' => 'thermometer',
     'humidity' || 'humidity2' => 'drop',
     'water_level' => 'tank',
-    'pump' || 'fan1' || 'fan2' => 'power',
+    'pump' || 'fan1' => 'power',
     _ => 'leaf',
   };
 
   static String _toneForMetric(String metric) => switch (metric) {
     'temperature' || 'temperature2' => 'amber',
     'humidity' || 'humidity2' || 'water_level' => 'blue',
-    'pump' || 'fan1' || 'fan2' => 'neutral',
+    'pump' || 'fan1' => 'neutral',
     _ => 'green',
   };
 }

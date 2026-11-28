@@ -100,8 +100,7 @@ class _DashboardPageState extends State<DashboardPage> {
     };
 
     final pumpReading = _latestMetric(c, 'node2', 'pump', '');
-    final fan1Reading = _latestMetric(c, 'node1', 'fan1', '');
-    final fan2Reading = _latestMetric(c, 'node1', 'fan2', '');
+    final fanReading = _latestMetric(c, 'node1', 'fan1', '');
 
     return RefreshIndicator(
       onRefresh: c.preview ? () async {} : _refresh,
@@ -209,12 +208,11 @@ class _DashboardPageState extends State<DashboardPage> {
           _DeviceGroupPanel(
             panelKey: const Key('open-climate'),
             title: 'Iklim · Device 1',
-            subtitle: '2x SHT (udara) · 2 kipas',
+            subtitle: '2x SHT (udara) · 1 kipas',
             icon: 'sun',
             tone: 'amber',
             badges: [
-              _ActuatorBadge(label: 'Kipas 1', reading: fan1Reading),
-              _ActuatorBadge(label: 'Kipas 2', reading: fan2Reading),
+              _ActuatorBadge(label: 'Kipas', reading: fanReading),
             ],
             onDetail: () =>
                 _open(context, NodeDetailPage(controller: c, node: 'node1')),

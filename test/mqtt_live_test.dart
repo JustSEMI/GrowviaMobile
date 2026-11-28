@@ -45,10 +45,10 @@ void main() {
       final readings = readingsFromLiveMessage(
         'growvia/node1/data',
         '{"temperature":29.7,"humidity":72.1,"temperature2":28.4,'
-        '"humidity2":70.2,"light":41.3,"co2":615,"fan1":1,"fan2":0}',
+        '"humidity2":70.2,"light":41.3,"co2":615,"fan1":1}',
         recordedAt: DateTime.parse(_stamp),
       );
-      expect(readings, hasLength(8));
+      expect(readings, hasLength(7));
       expect(readings.every((r) => r.node == 'node1'), isTrue);
       expect(readings.every((r) => r.recordedAt.isUtc), isTrue);
       final byMetric = {for (final r in readings) r.metric: r};

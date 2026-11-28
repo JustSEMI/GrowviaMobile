@@ -14,7 +14,6 @@ const Map<String, String> kMetricUnits = {
   'water_level': '%',
   'pump': 'state',
   'fan1': 'state',
-  'fan2': 'state',
 };
 
 class Reading {
@@ -73,8 +72,7 @@ class Reading {
     'soil_temperature' => 'Suhu tanah',
     'water_level' => 'Isi tandon',
     'pump' => 'Status pompa',
-    'fan1' => 'Kipas 1',
-    'fan2' => 'Kipas 2',
+    'fan1' => 'Kipas',
     _ => metric,
   };
 }
